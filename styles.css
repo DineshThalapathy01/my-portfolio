@@ -372,6 +372,16 @@ img {
     overflow: auto;
 }
 
+/* Hide native scrollbars but keep content scrollable */
+.project-card {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.project-card::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
 /* On large screens, enforce exactly 3 columns to maintain consistent card sizing and layout */
 @media (min-width: 1100px) {
     .project-grid {
