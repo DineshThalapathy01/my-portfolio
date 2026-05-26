@@ -366,6 +366,19 @@ img {
     height: 100%;
 }
 
+/* Prevent cards from growing excessively tall. Allow internal scroll when content overflows. */
+.project-card {
+    max-height: 560px;
+    overflow: auto;
+}
+
+/* On large screens, enforce exactly 3 columns to maintain consistent card sizing and layout */
+@media (min-width: 1100px) {
+    .project-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 .project-card p:last-child {
     margin-top: auto;
 }
