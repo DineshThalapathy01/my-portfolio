@@ -152,7 +152,7 @@
             <input id="chatInput" type="text" placeholder="Ask me about my work..." autocomplete="off" />
             <div class="chat-suggestions-panel">
               <div class="chat-suggestions" id="chatSuggestions"></div>
-              <div class="chat-status" id="chatStatus">10s</div>
+              <div class="chat-status" id="chatStatus"></div>
             </div>
           </div>
           <button type="submit">Send</button>
@@ -169,6 +169,7 @@
   const chatForm = document.getElementById('chatForm');
   const chatInput = document.getElementById('chatInput');
   const chatStatus = document.getElementById('chatStatus');
+  const chatSuggestionsPanel = document.querySelector('.chat-suggestions-panel');
   const chatSendButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null;
   const originalSendButtonText = chatSendButton ? chatSendButton.textContent : 'Send';
 
@@ -277,6 +278,17 @@
     if (chatStatus) chatStatus.textContent = text;
   };
 
+  const showSuggestionPanel = () => {
+    if (!chatSuggestionsPanel) return;
+    chatSuggestionsPanel.classList.add('active');
+  };
+
+  const hideSuggestionPanel = () => {
+    if (!chatSuggestionsPanel) return;
+    chatSuggestionsPanel.classList.remove('active');
+    setStatus('');
+  };
+
   const suggestionPool = [
     'Tell me about the BBOCW project',
     'What technologies do you use?',
@@ -306,6 +318,7 @@
     if (typingInterval) {
       window.clearInterval(typingInterval);
     }
+    renderSuggestions([]);
     typingMessage = appendChatMessage('LEO is typing...', 'typing');
     setSendButtonTyping(true);
     let dots = 0;
@@ -345,6 +358,7 @@
     chatSuggestions.innerHTML = '';
     if (!items.length) {
       chatSuggestions.classList.remove('active');
+      hideSuggestionPanel();
       if (suggestionChangeInterval) {
         window.clearInterval(suggestionChangeInterval);
         suggestionChangeInterval = null;
@@ -369,6 +383,8 @@
       chatSuggestions.appendChild(item);
     });
     chatSuggestions.classList.add('active');
+    showSuggestionPanel();
+    setStatus('10s');
 
     if (suggestionChangeInterval) {
       window.clearInterval(suggestionChangeInterval);
@@ -512,22 +528,66 @@
   };
 
   const chatCloseBtn = document.getElementById('chatCloseBtn');
-  if (chatCloseBtn) {
-    chatCloseBtn.addEventListener('click', () => {
+  const hideChatWidget = () => {
+    if (!chatWidget) return;
+    chatWidget.classList.remove('open');
+    stopAutoRotate();
+    stopTypingIndicator();
+    if (chatSuggestionsPanel) {
+      hideSuggestionPanel();
+    }
+    setTogglePromptVisibility(true);
+    window.setTimeout(() => {
       if (chatWidget) {
         chatWidget.style.display = 'none';
-        stopAutoRotate();
-        stopTypingIndicator();
       }
-    });
+    }, 220);
+  };
+
+  if (chatCloseBtn) {
+    chatCloseBtn.addEventListener('click', hideChatWidget);
   }
 
+  const chatToggleMessages = [
+    "I'm LEO — ask me about projects!",
+    'Hi there! Click me to chat.',
+    'Need help? I’m here to answer.',
+    'Curious? Tap the chat button.',
+    'Ask me about BBOCW, TNCSC, or Smart Travellers.'
+  ];
+
+  let togglePromptInterval = null;
+  const leoTogglePrompt = document.createElement('div');
+  leoTogglePrompt.id = 'leoTogglePrompt';
+  leoTogglePrompt.className = 'leo-toggle-prompt';
+
+  const getNextToggleMessage = (current) => {
+    const candidates = chatToggleMessages.filter((text) => text !== current);
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  };
+
+  const updateTogglePromptText = () => {
+    const next = getNextToggleMessage(leoTogglePrompt.textContent || '');
+    leoTogglePrompt.textContent = next;
+  };
+
+  const setTogglePromptVisibility = (visible) => {
+    if (visible) {
+      leoTogglePrompt.classList.add('visible');
+    } else {
+      leoTogglePrompt.classList.remove('visible');
+    }
+  };
+
   const showChat = () => {
-    if (chatWidget) {
-      chatWidget.style.display = 'flex';
-      if (!chatFirstOpened) {
-        showGreetingOnFirstOpen();
-      }
+    if (!chatWidget) return;
+    chatWidget.style.display = 'grid';
+    window.requestAnimationFrame(() => {
+      chatWidget.classList.add('open');
+    });
+    setTogglePromptVisibility(false);
+    if (!chatFirstOpened) {
+      showGreetingOnFirstOpen();
     }
   };
 
@@ -535,9 +595,17 @@
   leoToggleBtn.id = 'leoToggleBtn';
   leoToggleBtn.type = 'button';
   leoToggleBtn.setAttribute('aria-label', 'Open chat');
+  leoToggleBtn.setAttribute('title', 'Open chat');
+  leoToggleBtn.className = 'leo-toggle-btn';
   leoToggleBtn.innerHTML = '💬';
-  leoToggleBtn.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #007bff; color: white; border: none; border-radius: 50%; width: 54px; height: 54px; cursor: pointer; font-size: 22px; z-index: 999; box-shadow: 0 2px 10px rgba(0,0,0,0.2);';
   leoToggleBtn.addEventListener('click', showChat);
+
+  leoTogglePrompt.textContent = chatToggleMessages[0];
+  if (!togglePromptInterval) {
+    togglePromptInterval = window.setInterval(updateTogglePromptText, 6000);
+  }
+
+  document.body.appendChild(leoTogglePrompt);
   document.body.appendChild(leoToggleBtn);
 
   if (chatWidget) {
