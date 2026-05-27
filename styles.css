@@ -253,15 +253,11 @@ img {
 }
 
 .card-highlight {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.6rem 1rem;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: #fff;
+    display: inline;
+    color: var(--accent-text);
     font-weight: 700;
-    width: fit-content;
+    padding: 0;
+    background: transparent;
 }
 
 .location-labels {
