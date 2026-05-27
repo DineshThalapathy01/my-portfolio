@@ -634,13 +634,14 @@
   leoToggleBtn.innerHTML = '💬';
   leoToggleBtn.addEventListener('click', showChat);
 
-  leoTogglePrompt.textContent = chatToggleMessages[0];
-  if (!togglePromptInterval) {
-    togglePromptInterval = window.setInterval(updateTogglePromptText, 6000);
-  }
-
+  // pick an initial random prompt and show it immediately
+  updateTogglePromptText();
   document.body.appendChild(leoTogglePrompt);
   document.body.appendChild(leoToggleBtn);
+  setTogglePromptVisibility(true);
+  if (!togglePromptInterval) {
+    togglePromptInterval = window.setInterval(updateTogglePromptText, 30000);
+  }
 
   if (chatWidget) {
     chatWidget.style.flexDirection = 'column';
