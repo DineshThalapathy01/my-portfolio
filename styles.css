@@ -745,3 +745,67 @@ figure {
         border-radius: 20px 20px 0 0;
     }
 }
+
+
+/* ===== Chat Suggestion Styles ===== */
+.chat-suggestions {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background: var(--chat-bg);
+    border: 1px solid var(--accent-color);
+    border-radius: 12px 12px 0 0;
+    padding: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.chat-suggestions.active {
+    display: block;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.suggestion-item:hover {
+    background: var(--hover-bg);
+    transform: translateX(4px);
+}
+
+.suggestion-item svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--accent-color);
+    flex-shrink: 0;
+}
+
+.chat-input-wrapper {
+    position: relative;
+}
+
+/* Scrollbar styling for suggestions */
+.chat-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-suggestions::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.chat-suggestions::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
+}

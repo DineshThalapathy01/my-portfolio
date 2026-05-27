@@ -148,7 +148,10 @@
       </div>
       <div class="chat-widget-footer">
         <form id="chatForm">
-          <input id="chatInput" type="text" placeholder="Ask me about my work..." autocomplete="off" />
+          <div class="chat-input-wrapper">
+            <input id="chatInput" type="text" placeholder="Ask me about my work..." autocomplete="off" />
+            <div class="chat-suggestions" id="chatSuggestions"></div>
+          </div>
           <button type="submit">Send</button>
         </form>
         <div class="chat-status" id="chatStatus"></div>
@@ -192,41 +195,52 @@
     if (chatStatus) chatStatus.textContent = text;
   };
 
-  const getResponse = (input) => {
-    const lower = input.toLowerCase();
-    const projectMap = [
-      { keys: ['bbocw', 'bihar'], reply: 'BBOCW is a Bihar welfare portal I built with Angular 16, Spring Boot, PostgreSQL and Aadhaar integration.' },
-      { keys: ['tncsc', 'tamil nadu', 'civil supplies'], reply: 'TNCSC is an enterprise access control app with RBAC, workflow modules and GCP-hosted services.' },
-      { keys: ['chatbot application', 'chatbot', 'url shortening'], reply: 'My chatbot app handles files, content moderation and quick responses with a Java backend.' },
-      { keys: ['regression', 'regression testing', 'excel'], reply: 'The regression tool automates file workflows, scheduled processing, secure sessions and Excel exports.' },
-      { keys: ['smart travellers', 'transport', 'flutter'], reply: 'Smart Travellers is a Flutter travel app for public transport guidance and route planning.' },
-    ];
+  const suggestionPool = [
+    'Tell me about the BBOCW project',
+    'What technologies do you use?',
+    'How did you build the chatbot?',
+    'Where is your office located?',
+    'Tell me about the Smart Travellers app',
+    'How did you start in full stack development?',
+    'What is the TNCSC project about?',
+    'What skills do you have in Java and Angular?',
+    'What is your experience with government systems?',
+    'How can I contact you?'
+  ];
 
-    for (const item of projectMap) {
-      if (item.keys.some((key) => lower.includes(key))) {
-        return item.reply;
-      }
-    }
+  const chatSuggestions = document.getElementById('chatSuggestions');
+  let suggestionHideTimeout = null;
 
-    if (/\b(hi|hello|hey|good morning|good evening)\b/.test(lower)) {
-      return 'Hello there. I’m LEO, here to answer quick questions about my work.';
+  const getSuggestions = (query) => {
+    const lower = query.toLowerCase();
+    const filtered = suggestionPool.filter((item) => !query || item.toLowerCase().includes(lower));
+    return filtered.sort(() => 0.5 - Math.random()).slice(0, 4);
+  };
+
+  const renderSuggestions = (items) => {
+    if (!chatSuggestions) return;
+    chatSuggestions.innerHTML = '';
+    if (!items.length) {
+      chatSuggestions.classList.remove('active');
+      return;
     }
-    if (/\b(name|who are you)\b/.test(lower)) {
-      return 'I’m LEO, a short and friendly portfolio AI assistant.';
-    }
-    if (/\b(skill|tech|technology|stack|tools)\b/.test(lower)) {
-      return 'I work with Angular, Java Spring Boot, PostgreSQL, REST APIs and modern frontend flows.';
-    }
-    if (/\b(location|chennai|bihar|patna|office)\b/.test(lower)) {
-      return 'My main work location is Chennai, with remote delivery for Bihar and state government apps.';
-    }
-    if (/\b(thank|thanks)\b/.test(lower)) {
-      return 'You’re welcome. Ask one more thing if you like.';
-    }
-    if (/\b(how are you|how is it going)\b/.test(lower)) {
-      return 'I’m ready and responsive, just ask about my projects or skills.';
-    }
-    return 'I keep replies short and helpful. Try asking about my projects or the technologies I use.';
+    items.forEach((suggestion) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'suggestion-item';
+      item.textContent = suggestion;
+      item.addEventListener('click', () => {
+        chatInput.value = suggestion;
+        renderSuggestions([]);
+        handleUserInput(suggestion);
+      });
+      chatSuggestions.appendChild(item);
+    });
+    chatSuggestions.classList.add('active');
+  };
+
+  const updateSuggestions = () => {
+    renderSuggestions(getSuggestions(chatInput.value.trim()));
   };
 
   const localResponses = (input) => {
@@ -313,6 +327,7 @@
 
     appendChatMessage(text, 'user');
     chatInput.value = '';
+    if (chatSuggestions) renderSuggestions([]);
     setStatus('LEO is typing...');
 
     const response = await getResponse(text);
@@ -328,6 +343,12 @@
     chatForm.addEventListener('submit', (event) => {
       event.preventDefault();
       handleUserInput(chatInput.value.trim());
+    });
+
+    chatInput.addEventListener('input', updateSuggestions);
+    chatInput.addEventListener('focus', updateSuggestions);
+    chatInput.addEventListener('blur', () => {
+      suggestionHideTimeout = window.setTimeout(() => renderSuggestions([]), 120);
     });
 
     chatInput.addEventListener('keydown', (event) => {
