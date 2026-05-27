@@ -254,9 +254,7 @@ img {
 
 .card-highlight {
     display: inline;
-    color: var(--accent-text);
-    font-weight: 700;
-    padding: 0;
+    color: var(--accent-text) !important;
     background: transparent;
 }
 
