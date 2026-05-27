@@ -150,11 +150,13 @@
         <form id="chatForm">
           <div class="chat-input-wrapper">
             <input id="chatInput" type="text" placeholder="Ask me about my work..." autocomplete="off" />
-            <div class="chat-suggestions" id="chatSuggestions"></div>
+            <div class="chat-suggestions-panel">
+              <div class="chat-suggestions" id="chatSuggestions"></div>
+              <div class="chat-status" id="chatStatus">10s</div>
+            </div>
           </div>
           <button type="submit">Send</button>
         </form>
-        <div class="chat-status" id="chatStatus"></div>
       </div>
     </aside>
   `;
@@ -233,13 +235,13 @@
         });
       }
       const seconds = Math.ceil(Math.max(0, remainingTime) / 1000);
-      setStatus(`Auto-switching in ${seconds} seconds...`);
+      setStatus(`${seconds}s`);
     };
 
     messages.forEach((msg, idx) => {
       msg.style.display = idx === currentMessageIndex ? 'block' : 'none';
     });
-    setStatus('Auto-switching in 10 seconds...');
+    setStatus('10s');
     autoRotateInterval = window.setInterval(updateCountdown, 100);
   };
 

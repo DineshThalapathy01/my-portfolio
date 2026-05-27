@@ -936,13 +936,10 @@ figure {
 /* ===== Chat Suggestion Styles ===== */
 .chat-suggestions {
     display: none;
-    position: absolute;
-    bottom: calc(100% + 8px);
+    position: relative;
     left: 0;
     right: 0;
-    min-width: 100%;
     width: 100%;
-    max-width: 100%;
     background: rgba(255, 255, 255, 0.98);
     border: 1px solid rgba(78, 212, 198, 0.24);
     border-radius: 12px;
@@ -996,6 +993,37 @@ figure {
 
 .chat-input-wrapper {
     position: relative;
+    width: 100%;
+}
+
+.chat-suggestions-panel {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+
+.chat-suggestions-panel .chat-suggestions,
+.chat-suggestions-panel .chat-status {
+    pointer-events: auto;
+}
+
+.chat-status {
+    min-width: 48px;
+    padding: 0.5rem 0.8rem;
+    border-radius: 12px;
+    background: rgba(78, 212, 198, 0.14);
+    color: var(--accent-text);
+    font-weight: 700;
+    text-align: right;
+    align-self: flex-end;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 /* Scrollbar styling for suggestions */
