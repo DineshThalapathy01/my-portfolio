@@ -167,6 +167,8 @@
   const chatForm = document.getElementById('chatForm');
   const chatInput = document.getElementById('chatInput');
   const chatStatus = document.getElementById('chatStatus');
+  const chatSendButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null;
+  const originalSendButtonText = chatSendButton ? chatSendButton.textContent : 'Send';
 
   const chatWidget = document.querySelector('.chat-widget');
   let chatFirstOpened = false;
@@ -189,14 +191,26 @@
     return hash;
   };
 
+  const setSendButtonTyping = (isTyping) => {
+    if (!chatSendButton) return;
+    chatSendButton.disabled = isTyping;
+    chatSendButton.textContent = isTyping ? 'Wait...' : originalSendButtonText;
+  };
+
   const showGreetingOnFirstOpen = () => {
     if (chatFirstOpened) return;
     chatFirstOpened = true;
+    setSendButtonTyping(true);
+    startTypingIndicator();
     const now = new Date();
     const dateStr = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const greeting = `Hi, I'm LEO! Today is ${dateStr}, ${timeStr}. Ask about my projects or skills.`;
-    appendChatMessage(greeting, 'bot');
+    setTimeout(() => {
+      stopTypingIndicator();
+      appendChatMessage(greeting, 'bot');
+      setSendButtonTyping(false);
+    }, 3000);
   };
 
   const startAutoRotate = () => {
@@ -207,12 +221,12 @@
     if (messages.length === 0) return;
 
     currentMessageIndex = currentMessageIndex % messages.length;
-    let remainingTime = 5000;
+    let remainingTime = 10000;
 
     const updateCountdown = () => {
       remainingTime -= 100;
       if (remainingTime <= 0) {
-        remainingTime = 5000;
+        remainingTime = 10000;
         currentMessageIndex = (currentMessageIndex + 1) % messages.length;
         messages.forEach((msg, idx) => {
           msg.style.display = idx === currentMessageIndex ? 'block' : 'none';
@@ -225,7 +239,7 @@
     messages.forEach((msg, idx) => {
       msg.style.display = idx === currentMessageIndex ? 'block' : 'none';
     });
-    setStatus('Auto-switching in 5 seconds...');
+    setStatus('Auto-switching in 10 seconds...');
     autoRotateInterval = window.setInterval(updateCountdown, 100);
   };
 
@@ -291,6 +305,7 @@
       window.clearInterval(typingInterval);
     }
     typingMessage = appendChatMessage('LEO is typing...', 'typing');
+    setSendButtonTyping(true);
     let dots = 0;
     typingInterval = window.setInterval(() => {
       if (typingMessage && typingMessage.querySelector('p')) {
@@ -309,6 +324,7 @@
       typingMessage.remove();
       typingMessage = null;
     }
+    setSendButtonTyping(false);
   };
 
   const getSuggestions = (query) => {
@@ -485,7 +501,7 @@
     startTypingIndicator();
 
     const response = await getResponse(text);
-    const delay = Math.min(1200, response.length * 35 + 200);
+    const delay = 3000;
 
     setTimeout(() => {
       appendChatMessage(response, 'bot');
@@ -499,6 +515,7 @@
       if (chatWidget) {
         chatWidget.style.display = 'none';
         stopAutoRotate();
+        stopTypingIndicator();
       }
     });
   }

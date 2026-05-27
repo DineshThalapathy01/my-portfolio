@@ -701,6 +701,8 @@ figure {
     gap: 0.35rem;
     overflow-y: auto;
     background: rgba(246, 255, 253, 0.95);
+    min-height: 260px;
+    max-height: 320px;
 }
 .chat-message {
     max-width: 85%;
@@ -739,7 +741,7 @@ figure {
 .chat-message.user .chat-time {
     text-align: right;
 }
-..chat-widget-footer {
+.chat-widget-footer {
     padding: 0.75rem 0.85rem 0.9rem;
     background: rgba(255, 255, 255, 0.96);
     border-top: 1px solid rgba(78, 212, 198, 0.08);
