@@ -1060,9 +1060,10 @@ figure {
 .chat-suggestions-panel {
     position: absolute;
     bottom: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    width: 100%;
+    left: -8px;
+    right: -8px;
+    width: calc(100% + 16px);
+    max-width: 320px;
     display: none;
     align-items: flex-start;
     justify-content: space-between;

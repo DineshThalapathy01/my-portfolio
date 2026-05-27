@@ -266,11 +266,6 @@
     message.appendChild(timeLabel);
     chatBody.appendChild(message);
     chatBody.scrollTop = chatBody.scrollHeight;
-    
-    if (type === 'bot') {
-      startAutoRotate();
-    }
-    
     return message;
   };
 
@@ -391,11 +386,12 @@
     }
     
     suggestionChangeInterval = window.setInterval(() => {
-      const newSuggestions = getSuggestions(chatInput.value.trim());
+      if (chatInput.value.trim()) return;
+      const newSuggestions = getSuggestions('');
       if (newSuggestions.length > 0) {
         renderSuggestions(newSuggestions);
       }
-    }, 2000);
+    }, 10000);
   };
 
   const updateSuggestions = () => {
