@@ -185,7 +185,13 @@
   const appendChatMessage = (text, type = 'bot') => {
     const message = document.createElement('div');
     message.className = `chat-message ${type}`;
-    message.textContent = text;
+    const textLine = document.createElement('p');
+    textLine.textContent = text;
+    const timeLabel = document.createElement('span');
+    timeLabel.className = 'chat-time';
+    timeLabel.textContent = formatTime();
+    message.appendChild(textLine);
+    message.appendChild(timeLabel);
     chatBody.appendChild(message);
     chatBody.scrollTop = chatBody.scrollHeight;
     return message;
@@ -210,6 +216,42 @@
 
   const chatSuggestions = document.getElementById('chatSuggestions');
   let suggestionHideTimeout = null;
+  let typingInterval = null;
+
+  const formatTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const startTypingIndicator = () => {
+    if (!chatStatus) return;
+    if (typingInterval) {
+      window.clearInterval(typingInterval);
+    }
+    let dots = '';
+    chatStatus.textContent = `LEO is typing • ${formatTime()}`;
+    typingInterval = window.setInterval(() => {
+      dots = dots.length < 3 ? dots + '.' : '';
+      if (chatStatus) {
+        chatStatus.textContent = `LEO is typing${dots} • ${formatTime()}`;
+      }
+    }, 500);
+  };
+
+  const stopTypingIndicator = () => {
+    if (typingInterval) {
+      window.clearInterval(typingInterval);
+      typingInterval = null;
+    }
+    if (chatStatus) {
+      chatStatus.textContent = `Answered at ${formatTime()}`;
+      window.setTimeout(() => {
+        if (chatStatus && chatStatus.textContent.startsWith('Answered')) {
+          chatStatus.textContent = '';
+        }
+      }, 2600);
+    }
+  };
 
   const getSuggestions = (query) => {
     const lower = query.toLowerCase();
@@ -246,7 +288,7 @@
   const localResponses = (input) => {
     const lower = input.toLowerCase();
     const projectMap = [
-      { keys: ['bbocw', 'bihar'], reply: 'BBOCW is a Bihar welfare portal I built with Angular 16, Spring Boot, PostgreSQL and Aadhaar integration.' },
+      { keys: ['bbocw', 'bihar'], reply: 'BBOCW is a completed Bihar welfare portal delivered with Angular 16, Spring Boot, PostgreSQL and Aadhaar integration.' },
       { keys: ['tncsc', 'tamil nadu', 'civil supplies'], reply: 'TNCSC is an enterprise access control app with RBAC, workflow modules and GCP-hosted services.' },
       { keys: ['chatbot application', 'chatbot', 'url shortening'], reply: 'My chatbot app handles files, content moderation and quick responses with a Java backend.' },
       { keys: ['regression', 'regression testing', 'excel'], reply: 'The regression tool automates file workflows, scheduled processing, secure sessions and Excel exports.' },
@@ -271,6 +313,9 @@
     }
     if (/\b(skill|tech|technology|stack|tools)\b/.test(lower)) {
       return "S Dinesh Kumar works with Angular, Java Spring Boot, PostgreSQL, REST APIs and modern frontend flows.";
+    }
+    if (/\b(currently working|working now|at office|current project|ongoing project)\b/.test(lower)) {
+      return "The Bihar portal is completed and delivered; current work is focused on modern Angular and Spring Boot solutions from Chennai.";
     }
     if (/\b(location|chennai|bihar|patna|office)\b/.test(lower)) {
       return "S Dinesh Kumar works from Chennai, with remote delivery for Bihar and state government apps.";
@@ -328,14 +373,14 @@
     appendChatMessage(text, 'user');
     chatInput.value = '';
     if (chatSuggestions) renderSuggestions([]);
-    setStatus('LEO is typing...');
+    startTypingIndicator();
 
     const response = await getResponse(text);
     const delay = Math.min(1200, response.length * 35 + 200);
 
     setTimeout(() => {
       appendChatMessage(response, 'bot');
-      setStatus('');
+      stopTypingIndicator();
     }, delay);
   };
 
@@ -347,9 +392,16 @@
 
     chatInput.addEventListener('input', updateSuggestions);
     chatInput.addEventListener('focus', updateSuggestions);
+    chatInput.addEventListener('click', updateSuggestions);
     chatInput.addEventListener('blur', () => {
       suggestionHideTimeout = window.setTimeout(() => renderSuggestions([]), 120);
     });
+
+    if (chatSuggestions) {
+      chatSuggestions.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+      });
+    }
 
     chatInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && !event.shiftKey) {

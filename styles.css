@@ -676,22 +676,39 @@ figure {
     background: rgba(246, 255, 253, 0.95);
 }
 .chat-message {
-    max-width: 100%;
+    max-width: 84%;
     padding: 0.95rem 1rem;
     border-radius: 18px;
     line-height: 1.65;
     word-break: break-word;
     white-space: pre-wrap;
+    position: relative;
+}
+.chat-message p {
+    margin: 0;
 }
 .chat-message.bot {
     align-self: flex-start;
     background: rgba(78, 212, 198, 0.16);
     color: var(--text);
+    border-radius: 18px 18px 18px 6px;
+    text-align: left;
 }
 .chat-message.user {
     align-self: flex-end;
-    background: rgba(14, 50, 74, 0.08);
+    background: rgba(14, 50, 74, 0.16);
     color: var(--text);
+    border-radius: 18px 18px 6px 18px;
+    text-align: right;
+}
+.chat-message .chat-time {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: rgba(0, 0, 0, 0.42);
+}
+.chat-message.user .chat-time {
+    text-align: right;
 }
 .chat-widget-footer {
     padding: 0.85rem 1rem 1rem;
@@ -754,18 +771,44 @@ figure {
     bottom: 100%;
     left: 0;
     right: 0;
-    background: var(--chat-bg);
-    border: 1px solid var(--accent-color);
+    width: 100%;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(78, 212, 198, 0.24);
     border-radius: 12px 12px 0 0;
     padding: 8px;
     max-height: 180px;
     overflow-y: auto;
     z-index: 100;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
 }
 
 .chat-suggestions.active {
     display: block;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 0;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 0.9rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(78, 212, 198, 0.12);
+    background: transparent;
+    transition: background 0.18s ease;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item:focus {
+    background: rgba(78, 212, 198, 0.12);
 }
 
 .suggestion-item {
