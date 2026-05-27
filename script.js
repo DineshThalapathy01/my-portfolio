@@ -223,19 +223,20 @@
     return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  let typingMessage = null;
+
   const startTypingIndicator = () => {
-    if (!chatStatus) return;
     if (typingInterval) {
       window.clearInterval(typingInterval);
     }
-    let dots = '';
-    chatStatus.textContent = `LEO is typing • ${formatTime()}`;
+    typingMessage = appendChatMessage('LEO is typing...', 'bot');
+    let dots = 0;
     typingInterval = window.setInterval(() => {
-      dots = dots.length < 3 ? dots + '.' : '';
-      if (chatStatus) {
-        chatStatus.textContent = `LEO is typing${dots} • ${formatTime()}`;
+      if (typingMessage && typingMessage.querySelector('p')) {
+        dots = (dots + 1) % 4;
+        typingMessage.querySelector('p').textContent = 'LEO is typing' + '.'.repeat(dots);
       }
-    }, 500);
+    }, 400);
   };
 
   const stopTypingIndicator = () => {
@@ -243,20 +244,16 @@
       window.clearInterval(typingInterval);
       typingInterval = null;
     }
-    if (chatStatus) {
-      chatStatus.textContent = `Answered at ${formatTime()}`;
-      window.setTimeout(() => {
-        if (chatStatus && chatStatus.textContent.startsWith('Answered')) {
-          chatStatus.textContent = '';
-        }
-      }, 2600);
+    if (typingMessage) {
+      typingMessage.remove();
+      typingMessage = null;
     }
   };
 
   const getSuggestions = (query) => {
     const lower = query.toLowerCase();
     const filtered = suggestionPool.filter((item) => !query || item.toLowerCase().includes(lower));
-    return filtered.sort(() => 0.5 - Math.random()).slice(0, 4);
+    return filtered.slice(0, 1);
   };
 
   const renderSuggestions = (items) => {
@@ -266,11 +263,12 @@
       chatSuggestions.classList.remove('active');
       return;
     }
-    items.forEach((suggestion) => {
+    items.forEach((suggestion, index) => {
       const item = document.createElement('button');
       item.type = 'button';
       item.className = 'suggestion-item';
       item.textContent = suggestion;
+      item.style.animation = `slideUpIn 0.2s ease ${index * 50}ms both`;
       item.addEventListener('click', () => {
         chatInput.value = suggestion;
         renderSuggestions([]);
@@ -287,46 +285,71 @@
 
   const localResponses = (input) => {
     const lower = input.toLowerCase();
-    const projectMap = [
-      { keys: ['bbocw', 'bihar'], reply: 'BBOCW is a completed Bihar welfare portal delivered with Angular 16, Spring Boot, PostgreSQL and Aadhaar integration.' },
-      { keys: ['tncsc', 'tamil nadu', 'civil supplies'], reply: 'TNCSC is an enterprise access control app with RBAC, workflow modules and GCP-hosted services.' },
-      { keys: ['chatbot application', 'chatbot', 'url shortening'], reply: 'My chatbot app handles files, content moderation and quick responses with a Java backend.' },
-      { keys: ['regression', 'regression testing', 'excel'], reply: 'The regression tool automates file workflows, scheduled processing, secure sessions and Excel exports.' },
-      { keys: ['smart travellers', 'transport', 'flutter'], reply: 'Smart Travellers is a Flutter travel app for public transport guidance and route planning.' },
+    
+    // Exact phrase matching for better relevance
+    const exactMatches = [
+      { phrase: 'Tell me about the BBOCW project', reply: 'BBOCW is the Bihar welfare portal I built with Angular 16, Spring Boot, PostgreSQL, and Aadhaar integration for secure citizen access.' },
+      { phrase: 'What technologies do you use?', reply: 'I specialize in Angular, Java Spring Boot, PostgreSQL, REST APIs, Flutter, and modern full-stack development.' },
+      { phrase: 'How did you build the chatbot?', reply: 'I built the chatbot using Java backend with file handling, content moderation, and quick response processing capabilities.' },
+      { phrase: 'Where is your office located?', reply: 'I work from Chennai, delivering solutions remotely for state government systems and Bihar projects.' },
+      { phrase: 'Tell me about the Smart Travellers app', reply: 'Smart Travellers is a Flutter app for public transport guidance and route planning with real-time navigation support.' },
+      { phrase: 'How did you start in full stack development?', reply: 'I started with Angular frontend fundamentals and expanded to backend services with Spring Boot and database design.' },
+      { phrase: 'What is the TNCSC project about?', reply: 'TNCSC is an enterprise access control system with role-based permissions, workflow modules, and GCP-hosted infrastructure.' },
+      { phrase: 'What skills do you have in Java and Angular?', reply: 'In Java I use Spring Boot for APIs; in Angular I build responsive interfaces, state management, and component architecture.' },
+      { phrase: 'What is your experience with government systems?', reply: 'I have 2+ years building government systems like Bihar BBOCW portal and Tamil Nadu TNCSC with enterprise-level requirements.' },
+      { phrase: 'How can I contact you?', reply: 'You can find my contact details on the portfolio homepage under the contact section with email and messaging options.' }
     ];
+
+    // Check for exact phrase matches first
+    for (const match of exactMatches) {
+      if (lower.includes(match.phrase.toLowerCase())) {
+        return match.reply;
+      }
+    }
+
+    // Keyword-based matching for general queries
+    const projectMap = [
+      { keys: ['bbocw', 'bihar', 'welfare', 'portal'], reply: 'BBOCW is the Bihar welfare portal with Angular 16, Spring Boot, PostgreSQL, and Aadhaar integration.' },
+      { keys: ['tncsc', 'tamil', 'civil', 'supplies', 'access'], reply: 'TNCSC is an enterprise access control system with role-based permissions and GCP-hosted services.' },
+      { keys: ['chatbot', 'url', 'shortening', 'file'], reply: 'My chatbot handles file processing, content moderation, and quick responses with a Java backend.' },
+      { keys: ['regression', 'testing', 'excel', 'automate'], reply: 'The regression testing tool automates workflows, scheduled processing, and Excel export functionality.' },
+      { keys: ['smart', 'travellers', 'transport', 'flutter', 'app'], reply: 'Smart Travellers is a Flutter travel app for public transport guidance and route planning.' },
+    ];
+
     for (const item of projectMap) {
       if (item.keys.some((key) => lower.includes(key))) {
         return item.reply;
       }
     }
+
     if (/\b(hi|hello|hey|good morning|good evening)\b/.test(lower)) {
-      return "Hello. I am LEO, assistant for S Dinesh Kumar. What would you like to know?";
+      return "Hello! I'm LEO, S Dinesh Kumar's portfolio assistant. What would you like to know?";
     }
     if (/\b(name|who are you|who is leo)\b/.test(lower)) {
-      return "I'm LEO, an AI assistant for S Dinesh Kumar's portfolio.";
+      return "I'm LEO, an AI assistant for S Dinesh Kumar's full-stack development portfolio.";
     }
-    if (/\b(boss|owner|creator|who made|who created|who built|who is your boss)\b/.test(lower)) {
-      return "I'm built for S Dinesh Kumar, a Full Stack Developer with 2+ years of experience.";
+    if (/\b(boss|owner|creator|who made|who created|who built)\b/.test(lower)) {
+      return "I serve S Dinesh Kumar, a Full Stack Developer with 2+ years of experience in government systems.";
     }
-    if (/\b(profile|about.*profile|tell me about.*profile)\b/.test(lower)) {
-      return "S Dinesh Kumar is a Full Stack Developer specializing in Angular, Spring Boot, and government systems.";
+    if (/\b(profile|about|background)\b/.test(lower)) {
+      return "S Dinesh Kumar is a Full Stack Developer specializing in Angular, Spring Boot, and enterprise systems.";
     }
-    if (/\b(skill|tech|technology|stack|tools)\b/.test(lower)) {
-      return "S Dinesh Kumar works with Angular, Java Spring Boot, PostgreSQL, REST APIs and modern frontend flows.";
+    if (/\b(skill|tech|technology|stack|tools|languages)\b/.test(lower)) {
+      return "Expert in Angular, Java Spring Boot, PostgreSQL, REST APIs, Flutter, and modern development patterns.";
     }
-    if (/\b(currently working|working now|at office|current project|ongoing project)\b/.test(lower)) {
-      return "The Bihar portal is completed and delivered; current work is focused on modern Angular and Spring Boot solutions from Chennai.";
+    if (/\b(currently|working|project|ongoing)\b/.test(lower)) {
+      return "Currently focused on modern Angular solutions and Spring Boot microservices from Chennai office.";
     }
-    if (/\b(location|chennai|bihar|patna|office)\b/.test(lower)) {
-      return "S Dinesh Kumar works from Chennai, with remote delivery for Bihar and state government apps.";
+    if (/\b(location|city|office|based|work)\b/.test(lower)) {
+      return "Based in Chennai with remote delivery for government and enterprise applications.";
     }
-    if (/\b(thank|thanks)\b/.test(lower)) {
-      return "You are welcome. Ask one more thing if you like.";
+    if (/\b(thank|thanks|appreciate)\b/.test(lower)) {
+      return "Thank you! Feel free to ask more about my projects or skills.";
     }
-    if (/\b(how are you|how is it going)\b/.test(lower)) {
-      return "I'm ready and responsive, just ask about S Dinesh Kumar's projects or skills.";
+    if (/\b(how are you|doing|how is it)\b/.test(lower)) {
+      return "I'm ready to help! Ask about S Dinesh Kumar's projects, skills, or experience.";
     }
-    return "I keep replies short and helpful. Try asking about S Dinesh Kumar or his projects.";
+    return "Ask about S Dinesh Kumar's projects (BBOCW, TNCSC, Chatbot, Regression, Smart Travellers), skills, or experience.";
   };
 
   const getResponse = async (input) => {
