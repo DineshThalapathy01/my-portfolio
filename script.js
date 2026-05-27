@@ -136,15 +136,15 @@
 
   // Portfolio AI chat widget
   const chatTemplate = `
-    <aside class="chat-widget" aria-live="polite">
-      <div class="chat-widget-header">
-        <span class="chat-welcome">LEO</span>
-        <p class="chat-subtitle">Portfolio AI assistant</p>
+    <aside class="chat-widget" aria-live="polite" style="display: none;">
+      <div class="chat-widget-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span class="chat-welcome">LEO</span>
+          <p class="chat-subtitle">Portfolio AI assistant</p>
+        </div>
+        <button id="chatCloseBtn" type="button" aria-label="Close chat" title="Close chat" style="background: none; border: none; cursor: pointer; font-size: 24px; padding: 0;">×</button>
       </div>
       <div class="chat-widget-body" id="chatBody">
-        <div class="chat-message bot">
-          <p>Hi, I’m LEO. Ask about my projects or skills.</p>
-        </div>
       </div>
       <div class="chat-widget-footer">
         <form id="chatForm">
@@ -168,6 +168,13 @@
   const chatInput = document.getElementById('chatInput');
   const chatStatus = document.getElementById('chatStatus');
 
+  const chatWidget = document.querySelector('.chat-widget');
+  let chatFirstOpened = false;
+  let autoRotateInterval = null;
+  let currentMessageIndex = 0;
+  let messageAutoRotateTimeout = null;
+  let blockCountdownInterval = null;
+
   const badWords = ['fuck', 'shit', 'bitch', 'asshole', 'damn', 'crap', 'idiot'];
   const badHashes = new Set();
   let warningCount = 0;
@@ -182,6 +189,54 @@
     return hash;
   };
 
+  const showGreetingOnFirstOpen = () => {
+    if (chatFirstOpened) return;
+    chatFirstOpened = true;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const greeting = `Hi, I'm LEO! Today is ${dateStr}, ${timeStr}. Ask about my projects or skills.`;
+    appendChatMessage(greeting, 'bot');
+  };
+
+  const startAutoRotate = () => {
+    if (autoRotateInterval) window.clearInterval(autoRotateInterval);
+    if (messageAutoRotateTimeout) window.clearTimeout(messageAutoRotateTimeout);
+
+    const messages = chatBody.querySelectorAll('.chat-message.bot');
+    if (messages.length === 0) return;
+
+    currentMessageIndex = currentMessageIndex % messages.length;
+    let remainingTime = 5000;
+
+    const updateCountdown = () => {
+      remainingTime -= 100;
+      if (remainingTime <= 0) {
+        remainingTime = 5000;
+        currentMessageIndex = (currentMessageIndex + 1) % messages.length;
+        messages.forEach((msg, idx) => {
+          msg.style.display = idx === currentMessageIndex ? 'block' : 'none';
+        });
+      }
+      const seconds = Math.max(0, (remainingTime / 1000)).toFixed(1);
+      setStatus(`Auto-switching in ${seconds} seconds...`);
+    };
+
+    messages.forEach((msg, idx) => {
+      msg.style.display = idx === currentMessageIndex ? 'block' : 'none';
+    });
+    setStatus('Auto-switching in 5.0 seconds...');
+    autoRotateInterval = window.setInterval(updateCountdown, 100);
+  };
+
+  const stopAutoRotate = () => {
+    if (autoRotateInterval) {
+      window.clearInterval(autoRotateInterval);
+      autoRotateInterval = null;
+    }
+    setStatus('');
+  };
+
   const appendChatMessage = (text, type = 'bot') => {
     const message = document.createElement('div');
     message.className = `chat-message ${type}`;
@@ -194,6 +249,11 @@
     message.appendChild(timeLabel);
     chatBody.appendChild(message);
     chatBody.scrollTop = chatBody.scrollHeight;
+    
+    if (type === 'bot') {
+      startAutoRotate();
+    }
+    
     return message;
   };
 
@@ -309,8 +369,8 @@
   };
 
   const localResponses = (input) => {
-    const lower = input.toLowerCase();
     const name = 'S Dinesh Kumar';
+    const lower = input.toLowerCase();
     
     // Exact phrase matching for better relevance
     const exactMatches = [
@@ -432,6 +492,38 @@
       stopTypingIndicator();
     }, delay);
   };
+
+  const chatCloseBtn = document.getElementById('chatCloseBtn');
+  if (chatCloseBtn) {
+    chatCloseBtn.addEventListener('click', () => {
+      if (chatWidget) {
+        chatWidget.style.display = 'none';
+        stopAutoRotate();
+      }
+    });
+  }
+
+  const showChat = () => {
+    if (chatWidget) {
+      chatWidget.style.display = 'flex';
+      if (!chatFirstOpened) {
+        showGreetingOnFirstOpen();
+      }
+    }
+  };
+
+  const leoToggleBtn = document.createElement('button');
+  leoToggleBtn.id = 'leoToggleBtn';
+  leoToggleBtn.type = 'button';
+  leoToggleBtn.setAttribute('aria-label', 'Open chat');
+  leoToggleBtn.innerHTML = '💬';
+  leoToggleBtn.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #007bff; color: white; border: none; border-radius: 50%; width: 54px; height: 54px; cursor: pointer; font-size: 22px; z-index: 999; box-shadow: 0 2px 10px rgba(0,0,0,0.2);';
+  leoToggleBtn.addEventListener('click', showChat);
+  document.body.appendChild(leoToggleBtn);
+
+  if (chatWidget) {
+    chatWidget.style.flexDirection = 'column';
+  }
 
   if (chatForm && chatInput) {
     chatForm.addEventListener('submit', (event) => {
