@@ -281,6 +281,7 @@
   const hideSuggestionPanel = () => {
     if (!chatSuggestionsPanel) return;
     chatSuggestionsPanel.classList.remove('active');
+    clearSuggestionCountdown();
     setStatus('');
   };
 
@@ -294,13 +295,47 @@
     'What is the TNCSC project about?',
     'What skills do you have in Java and Angular?',
     'What is your experience with government systems?',
-    'How can I contact you?'
+    'How can I contact you?',
+    'What is your full resume summary?',
+    'Describe your work history and experience.',
+    'What are your contact details?',
+    'Tell me about your biography.',
+    'Give project specifications for BBOCW or TNCSC.'
   ];
 
   const chatSuggestions = document.getElementById('chatSuggestions');
   let suggestionHideTimeout = null;
-  let suggestionChangeInterval = null;
+  let suggestionCountdownInterval = null;
+  let suggestionCountdownValue = 0;
   let typingInterval = null;
+  let isBotTyping = false;
+
+  const clearSuggestionCountdown = () => {
+    if (suggestionCountdownInterval) {
+      window.clearInterval(suggestionCountdownInterval);
+      suggestionCountdownInterval = null;
+    }
+  };
+
+  const startSuggestionCountdown = () => {
+    clearSuggestionCountdown();
+    suggestionCountdownValue = 10;
+    setStatus(`${suggestionCountdownValue}s`);
+    suggestionCountdownInterval = window.setInterval(() => {
+      suggestionCountdownValue -= 1;
+      if (suggestionCountdownValue <= 0) {
+        clearSuggestionCountdown();
+        const newSuggestions = getSuggestions(chatInput.value.trim());
+        if (newSuggestions.length > 0) {
+          renderSuggestions(newSuggestions);
+        } else {
+          hideSuggestionPanel();
+        }
+      } else {
+        setStatus(`${suggestionCountdownValue}s`);
+      }
+    }, 1000);
+  };
 
   const formatTime = () => {
     const now = new Date();
@@ -313,6 +348,7 @@
     if (typingInterval) {
       window.clearInterval(typingInterval);
     }
+    isBotTyping = true;
     renderSuggestions([]);
     typingMessage = appendChatMessage('LEO is typing...', 'typing');
     setSendButtonTyping(true);
@@ -330,6 +366,7 @@
       window.clearInterval(typingInterval);
       typingInterval = null;
     }
+    isBotTyping = false;
     if (typingMessage) {
       typingMessage.remove();
       typingMessage = null;
@@ -354,10 +391,6 @@
     if (!items.length) {
       chatSuggestions.classList.remove('active');
       hideSuggestionPanel();
-      if (suggestionChangeInterval) {
-        window.clearInterval(suggestionChangeInterval);
-        suggestionChangeInterval = null;
-      }
       return;
     }
     items.forEach((suggestion, index) => {
@@ -368,10 +401,7 @@
       item.style.animation = `slideUpIn 0.2s ease ${index * 50}ms both`;
       item.addEventListener('click', () => {
         chatInput.value = suggestion;
-        if (suggestionChangeInterval) {
-          window.clearInterval(suggestionChangeInterval);
-          suggestionChangeInterval = null;
-        }
+        clearSuggestionCountdown();
         renderSuggestions([]);
         handleUserInput(suggestion);
       });
@@ -379,19 +409,7 @@
     });
     chatSuggestions.classList.add('active');
     showSuggestionPanel();
-    setStatus('10s');
-
-    if (suggestionChangeInterval) {
-      window.clearInterval(suggestionChangeInterval);
-    }
-    
-    suggestionChangeInterval = window.setInterval(() => {
-      if (chatInput.value.trim()) return;
-      const newSuggestions = getSuggestions('');
-      if (newSuggestions.length > 0) {
-        renderSuggestions(newSuggestions);
-      }
-    }, 10000);
+    startSuggestionCountdown();
   };
 
   const updateSuggestions = () => {
@@ -413,7 +431,12 @@
       { phrase: 'What is the TNCSC project about?', reply: `TNCSC is an enterprise access control system ${name} developed with role-based permissions, workflow modules, and GCP-hosted infrastructure.` },
       { phrase: 'What skills do you have in Java and Angular?', reply: `${name} uses Spring Boot for APIs in Java; in Angular builds responsive interfaces, state management, and component architecture.` },
       { phrase: 'What is your experience with government systems?', reply: `${name} has 2+ years building government systems like Bihar BBOCW portal and Tamil Nadu TNCSC with enterprise-level requirements.` },
-      { phrase: 'How can I contact you?', reply: `You can find ${name}'s contact details on the portfolio homepage under the contact section with email and messaging options.` }
+      { phrase: 'How can I contact you?', reply: `You can find ${name}'s contact details on the portfolio homepage under the contact section with email and messaging options.` },
+      { phrase: 'What are your contact details?', reply: `You can contact ${name} through the portfolio contact section, where email and messaging options are listed.` },
+      { phrase: 'Tell me your resume', reply: `${name} is a Full Stack Developer with 2+ years experience building Angular, Spring Boot, PostgreSQL, REST APIs, Flutter, and government/enterprise systems from Chennai.` },
+      { phrase: 'Tell me about your biography', reply: `${name} is a Full Stack Developer focused on enterprise portals, citizen services, mobile travel apps, chatbots, and regression automation since April 2023.` },
+      { phrase: 'Where have you worked?', reply: `${name} has worked on government welfare and access systems like BBOCW and TNCSC, plus apps like Smart Travellers, a chatbot, and regression tooling.` },
+      { phrase: 'What is your work history?', reply: `${name}'s work history spans full-stack development of web and mobile solutions since April 2023, with strong experience in Angular, Java Spring Boot, and PostgreSQL.` }
     ];
 
     // Check for exact phrase matches first
@@ -449,6 +472,15 @@
     }
     if (/\b(profile|about|background)\b/.test(lower)) {
       return `${name} is a Full Stack Developer specializing in Angular, Spring Boot, and enterprise systems.`;
+    }
+    if (/\b(contact|email|phone|reach you|contact details)\b/.test(lower)) {
+      return `You can contact ${name} through the portfolio contact section, where email and messaging options are listed.`;
+    }
+    if (/\b(resume|cv|bio|biography|career|employment|work history)\b/.test(lower)) {
+      return `${name} is a Full Stack Developer with 2+ years of experience in Angular, Java Spring Boot, PostgreSQL, REST APIs, Flutter, and government systems. Key projects include BBOCW, TNCSC, Smart Travellers, chatbot, and regression automation.`;
+    }
+    if (/\b(project (spec|details|specification|specs)|project information)\b/.test(lower)) {
+      return `Project specs cover BBOCW with Angular and Spring Boot, TNCSC with access control and GCP hosting, Smart Travellers with Flutter, plus chatbot and regression tools for government/enterprise workflows.`;
     }
     if (/\b(skill|tech|technology|stack|tools|languages)\b/.test(lower)) {
       return `${name} is expert in Angular, Java Spring Boot, PostgreSQL, REST APIs, Flutter, and modern development patterns.`;
@@ -487,6 +519,10 @@
 
   const handleUserInput = async (text) => {
     if (!text) return;
+    if (isBotTyping) {
+      setStatus('LEO is replying now. Please wait for the answer.');
+      return;
+    }
     const now = Date.now();
     if (blockUntil && now < blockUntil) {
       setStatus('You are blocked for 5 seconds. Please wait.');
@@ -545,11 +581,13 @@
   }
 
   const chatToggleMessages = [
-    "I'm LEO — ask me about projects!",
-    'Hi there! Click me to chat.',
-    'Need help? I’m here to answer.',
-    'Curious? Tap the chat button.',
-    'Ask me about BBOCW, TNCSC, or Smart Travellers.'
+    'Hey, I’m LEO!',
+    'I’m here to help—ask me anything.',
+    'Need a quick answer? Tap me.',
+    'I’m LEO, your portfolio assistant.',
+    'Let’s talk about projects or skills!',
+    'Hi there! I’m LEO, ready to help.',
+    'Curious? I can answer your questions.'
   ];
 
   let togglePromptInterval = null;
@@ -620,10 +658,7 @@
     chatInput.addEventListener('blur', () => {
       suggestionHideTimeout = window.setTimeout(() => {
         renderSuggestions([]);
-        if (suggestionChangeInterval) {
-          window.clearInterval(suggestionChangeInterval);
-          suggestionChangeInterval = null;
-        }
+        clearSuggestionCountdown();
       }, 120);
     });
 
