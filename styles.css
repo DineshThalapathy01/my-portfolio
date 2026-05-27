@@ -739,10 +739,14 @@ figure {
 .chat-message.user .chat-time {
     text-align: right;
 }
-.chat-widget-footer {
+..chat-widget-footer {
     padding: 0.75rem 0.85rem 0.9rem;
     background: rgba(255, 255, 255, 0.96);
     border-top: 1px solid rgba(78, 212, 198, 0.08);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.7rem;
+    align-items: center;
 }
 #chatForm {
     display: grid;
@@ -786,7 +790,8 @@ figure {
     min-height: 1.2rem;
     font-size: 0.9rem;
     color: var(--accent-text);
-    text-align: center;
+    text-align: right;
+    justify-self: end;
 }
 
 /* Desktop: Large screens (1440px and above) */

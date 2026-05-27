@@ -218,14 +218,14 @@
           msg.style.display = idx === currentMessageIndex ? 'block' : 'none';
         });
       }
-      const seconds = Math.max(0, (remainingTime / 1000)).toFixed(1);
+      const seconds = Math.ceil(Math.max(0, remainingTime) / 1000);
       setStatus(`Auto-switching in ${seconds} seconds...`);
     };
 
     messages.forEach((msg, idx) => {
       msg.style.display = idx === currentMessageIndex ? 'block' : 'none';
     });
-    setStatus('Auto-switching in 5.0 seconds...');
+    setStatus('Auto-switching in 5 seconds...');
     autoRotateInterval = window.setInterval(updateCountdown, 100);
   };
 
@@ -290,7 +290,7 @@
     if (typingInterval) {
       window.clearInterval(typingInterval);
     }
-    typingMessage = appendChatMessage('LEO is typing...', 'bot');
+    typingMessage = appendChatMessage('LEO is typing...', 'typing');
     let dots = 0;
     typingInterval = window.setInterval(() => {
       if (typingMessage && typingMessage.querySelector('p')) {
