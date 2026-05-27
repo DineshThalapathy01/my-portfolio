@@ -568,7 +568,7 @@
     if (chatSuggestionsPanel) {
       hideSuggestionPanel();
     }
-    setTogglePromptVisibility(true);
+    updateTogglePromptText();
     window.setTimeout(() => {
       if (chatWidget) {
         chatWidget.style.display = 'none';
@@ -591,6 +591,7 @@
   ];
 
   let togglePromptInterval = null;
+  let togglePromptHideTimeout = null;
   const leoTogglePrompt = document.createElement('div');
   leoTogglePrompt.id = 'leoTogglePrompt';
   leoTogglePrompt.className = 'leo-toggle-prompt';
@@ -600,9 +601,18 @@
     return candidates[Math.floor(Math.random() * candidates.length)];
   };
 
-  const updateTogglePromptText = () => {
+  const updateTogglePromptText = (autoShow = true) => {
     const next = getNextToggleMessage(leoTogglePrompt.textContent || '');
     leoTogglePrompt.textContent = next;
+    if (autoShow) {
+      setTogglePromptVisibility(true);
+      if (togglePromptHideTimeout) {
+        window.clearTimeout(togglePromptHideTimeout);
+      }
+      togglePromptHideTimeout = window.setTimeout(() => {
+        setTogglePromptVisibility(false);
+      }, 5000);
+    }
   };
 
   const setTogglePromptVisibility = (visible) => {
@@ -620,6 +630,10 @@
       chatWidget.classList.add('open');
     });
     setTogglePromptVisibility(false);
+    if (togglePromptHideTimeout) {
+      window.clearTimeout(togglePromptHideTimeout);
+      togglePromptHideTimeout = null;
+    }
     if (!chatFirstOpened) {
       showGreetingOnFirstOpen();
     }
@@ -634,13 +648,12 @@
   leoToggleBtn.innerHTML = '💬';
   leoToggleBtn.addEventListener('click', showChat);
 
-  // pick an initial random prompt and show it immediately
+  // pick an initial random prompt, show it briefly, and rotate every 30s
   updateTogglePromptText();
   document.body.appendChild(leoTogglePrompt);
   document.body.appendChild(leoToggleBtn);
-  setTogglePromptVisibility(true);
   if (!togglePromptInterval) {
-    togglePromptInterval = window.setInterval(updateTogglePromptText, 30000);
+    togglePromptInterval = window.setInterval(() => updateTogglePromptText(true), 30000);
   }
 
   if (chatWidget) {

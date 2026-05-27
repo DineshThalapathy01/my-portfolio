@@ -683,8 +683,9 @@ figure {
 }
 #leoTogglePrompt {
     position: fixed;
+    /* align the prompt above the chat button */
     bottom: 86px;
-    right: 10px;
+    right: 20px;
     max-width: 220px;
     padding: 0.85rem 1rem;
     background: rgba(255, 255, 255, 0.98);
@@ -698,12 +699,27 @@ figure {
     opacity: 0;
     transform: translateY(6px);
     transition: opacity 0.22s ease, transform 0.22s ease;
-    z-index: 1000;
+    z-index: 1002; /* sit above the button */
     pointer-events: none;
 }
 #leoTogglePrompt.visible {
     opacity: 1;
     transform: translateY(0);
+}
+
+#leoTogglePrompt::after {
+    /* small triangular pointer toward the chat button center */
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    right: 27px; /* aligns roughly with the center of the 54px button (20px right + 27px) */
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid rgba(255, 255, 255, 0.98);
+    filter: drop-shadow(0 6px 10px rgba(14,50,74,0.06));
+    transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .chat-widget-header {
     display: flex;
