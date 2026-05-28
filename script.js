@@ -421,7 +421,7 @@
   let emailFlow = null;
   let emailData = { subject: '', body: '' };
 
-  const CONTACT_DETAILS = `📧 dineshkummarnavarasam@gmail.com\n📍 Chennai, India\n🔗 https://dineshkumar13dk.github.io/profile/`;
+  const CONTACT_DETAILS = `📧 dineshkummarnavarasam@gmail.com\n📍 Chennai, India\n🔗 https://dineshthalapathy01.github.io/my-portfolio/`;
 
   const lockInput = (placeholder) => {
     chatInput.disabled = true;
@@ -608,22 +608,51 @@
     return `Ask about ${name}'s projects (BBOCW, TNCSC, Chatbot, Regression, Smart Travellers), skills, or experience.`;
   };
 
+  // ── Real-time AI via Cloudflare Worker proxy (key never in repo) ──────────
+  const LEO_WORKER_URL = 'YOUR_CLOUDFLARE_WORKER_URL'; // e.g. https://leo-proxy.yourname.workers.dev
+  const MAX_REPLY_CHARS = 750;
+
+  const PORTFOLIO_CONTEXT = `You are LEO, the AI assistant for S Dinesh Kumar's portfolio.
+Rules:
+- Reply in 1-2 short sentences by default.
+- If the answer genuinely needs more detail, reply up to ${MAX_REPLY_CHARS} characters max, then end with: "[Reply limited to ${MAX_REPLY_CHARS} chars. Ask a follow-up for more!]"
+- Never exceed ${MAX_REPLY_CHARS} characters total.
+- Only answer questions related to Dinesh's portfolio, skills, or projects.
+- If unrelated, say: "I can only answer questions about Dinesh's portfolio."
+Portfolio facts:
+- Name: S Dinesh Kumar, Full Stack Java Developer, 2+ years exp, based in Chennai.
+- Company: Eagle Software India Pvt Ltd.
+- Skills: Angular (16/19/20), Java Spring Boot, PostgreSQL, Oracle, MySQL, REST APIs, JWT, Spring Security, Microservices, Flutter, GCP, Git.
+- Projects: BBOCW (Bihar welfare portal, Angular+Spring Boot+Aadhaar), TNCSC (Tamil Nadu access control, RBAC+GCP), Smart Travellers (Flutter transport app), Chatbot (Java file/content handling), Regression Tool (automated testing+Excel export).
+- Contact: dineshkummarnavarasam@gmail.com
+- Portfolio URL: https://dineshthalapathy01.github.io/my-portfolio/`;
+
   const getResponse = async (input) => {
+    // Check contact trigger before AI call
+    if (/\b(contact|email|phone|reach|contact details)\b/i.test(input)) {
+      return '__CONTACT_TRIGGER__';
+    }
     try {
-      const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1', {
-        headers: { Authorization: 'Bearer YOUR_HUGGINGFACE_TOKEN' },
+      const res = await fetch(LEO_WORKER_URL, {
         method: 'POST',
-        body: JSON.stringify({ inputs: `You are LEO, a friendly portfolio AI assistant for S Dinesh Kumar's portfolio. Keep replies SHORT (1-2 sentences max). Portfolio context: BBOCW (Bihar welfare portal), TNCSC (Tamil Nadu access control), Chatbot (file & content handling), Regression (testing tool), Smart Travellers (transport app). User profile: S Dinesh Kumar is a Full Stack Developer with 2+ years of experience. User: ${input}` }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: PORTFOLIO_CONTEXT, message: input }),
       });
-      if (!response.ok) throw new Error('API error');
-      const data = await response.json();
-      let text = data?.[0]?.generated_text || '';
-      text = text.replace(/.*?User:/, '').trim().split('\n')[0].substring(0, 150);
-      return text || localResponses(input);
+      if (!res.ok) throw new Error('worker error');
+      const data = await res.json();
+      let reply = (data.reply || '').trim();
+      if (!reply) return localResponses(input);
+      // Enforce char limit with notice
+      if (reply.length > MAX_REPLY_CHARS) {
+        reply = reply.substring(0, MAX_REPLY_CHARS).trimEnd() +
+          `… [Reply limited to ${MAX_REPLY_CHARS} chars. Ask a follow-up for more!]`;
+      }
+      return reply;
     } catch {
       return localResponses(input);
     }
   };
+  // ─────────────────────────────────────────────────────────────────────────
 
   const handleUserInput = async (text) => {
     if (!text) return;
