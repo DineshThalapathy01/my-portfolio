@@ -185,6 +185,8 @@
   let warningCount = 0;
   let blockUntil = null;
 
+  const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   const hashBadWord = (word) => {
     let hash = 0;
     for (let i = 0; i < word.length; i += 1) {
@@ -194,10 +196,18 @@
     return hash;
   };
 
+  const getBlockRemainingMs = () => (blockUntil ? Math.max(0, blockUntil - Date.now()) : 0);
+
   const setSendButtonTyping = (isTyping) => {
     if (!chatSendButton) return;
-    chatSendButton.disabled = isTyping;
-    chatSendButton.textContent = isTyping ? 'Wait...' : originalSendButtonText;
+    const blockSeconds = Math.ceil(getBlockRemainingMs() / 1000);
+    const isBlockedNow = blockSeconds > 0;
+    chatSendButton.disabled = isTyping || isBlockedNow;
+    if (isTyping) {
+      chatSendButton.textContent = 'Wait...';
+      return;
+    }
+    chatSendButton.textContent = isBlockedNow ? `Wait ${blockSeconds}s` : originalSendButtonText;
   };
 
   const showGreetingOnFirstOpen = () => {
@@ -273,6 +283,37 @@
     if (!chatStatus) return;
     chatStatus.textContent = text;
     chatStatus.classList.toggle('visible', Boolean(text));
+  };
+
+  const stopBlockCountdown = () => {
+    if (blockCountdownInterval) {
+      window.clearInterval(blockCountdownInterval);
+      blockCountdownInterval = null;
+    }
+  };
+
+  const updateBlockCountdown = () => {
+    const remainingMs = getBlockRemainingMs();
+    if (remainingMs <= 0) {
+      blockUntil = null;
+      stopBlockCountdown();
+      if (!isBotTyping) {
+        setStatus('');
+      }
+      setSendButtonTyping(false);
+      return;
+    }
+
+    const remainingSeconds = Math.ceil(remainingMs / 1000);
+    setStatus(`Blocked for ${remainingSeconds}s`);
+    setSendButtonTyping(false);
+  };
+
+  const startBlockCountdown = (durationMs = 5000) => {
+    blockUntil = Date.now() + durationMs;
+    stopBlockCountdown();
+    updateBlockCountdown();
+    blockCountdownInterval = window.setInterval(updateBlockCountdown, 250);
   };
 
   const showSuggestionPanel = () => {
@@ -392,6 +433,11 @@
     
     return filtered.slice(0, 1);
   };
+
+  const censorBadWords = (input) => badWords.reduce((sanitized, word) => {
+    const pattern = new RegExp(`\\b${escapeRegExp(word)}\\b`, 'gi');
+    return sanitized.replace(pattern, '******');
+  }, input);
 
   const renderSuggestions = (items, options = {}) => {
     const { sticky = false, onSelect = null, variant = 'default' } = options;
@@ -860,36 +906,39 @@ Portfolio facts:
 
     if (isBotTyping) {
       setStatus('LEO is replying now. Please wait for the answer.');
+      setSendButtonTyping(true);
       return;
     }
-    const now = Date.now();
-    if (blockUntil && now < blockUntil) {
-      setStatus('You are blocked for 5 seconds. Please wait.');
-      appendChatMessage('I’m blocked for a moment. I will be back soon.', 'bot');
+    if (getBlockRemainingMs() > 0) {
+      updateBlockCountdown();
       return;
     }
 
+    let processedText = text;
     const found = badWords.filter((word) => new RegExp(`\\b${word}\\b`, 'i').test(text));
     if (found.length > 0) {
+      processedText = censorBadWords(text);
       found.forEach((word) => badHashes.add(hashBadWord(word.toLowerCase())));
       warningCount += found.length;
+      appendChatMessage(processedText, 'user');
+      chatInput.value = '';
+      if (chatSuggestions) renderSuggestions([]);
       if (warningCount >= 3) {
-        blockUntil = now + 5000;
-        setStatus('Blocked for 5 seconds. Do not repeat that.');
-        appendChatMessage('Stop using rude words. Wait 5 seconds before sending again.', 'bot');
+        startBlockCountdown(5000);
+        appendChatMessage('I masked the bad words as ******. Please wait a few seconds before sending again.', 'bot');
+        return;
       } else {
-        setStatus('Please keep the chat polite. One more warning and I block input.');
-        appendChatMessage('I prefer polite language. Please try again.', 'bot');
+        setStatus('I masked the bad words as ******. Please keep the chat polite.');
+        appendChatMessage('I masked the bad words as ******. Please keep the chat polite.', 'bot');
       }
-      return;
+    } else {
+      appendChatMessage(processedText, 'user');
+      chatInput.value = '';
+      if (chatSuggestions) renderSuggestions([]);
     }
-
-    appendChatMessage(text, 'user');
-    chatInput.value = '';
-    if (chatSuggestions) renderSuggestions([]);
     startTypingIndicator();
 
-    const response = await getResponse(text);
+    const response = await getResponse(processedText);
     const delay = 3000;
 
     setTimeout(() => {
@@ -1009,9 +1058,24 @@ Portfolio facts:
   }
 
   if (chatForm && chatInput) {
+    const submitChatMessage = () => {
+      if (chatInput.disabled) return;
+      if (getBlockRemainingMs() > 0) {
+        updateBlockCountdown();
+        return;
+      }
+      if (isBotTyping) {
+        setStatus('LEO is replying now. Please wait for the answer.');
+        setSendButtonTyping(true);
+        return;
+      }
+      if (chatSendButton && chatSendButton.disabled) return;
+      handleUserInput(chatInput.value.trim());
+    };
+
     chatForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      handleUserInput(chatInput.value.trim());
+      submitChatMessage();
     });
 
     chatInput.addEventListener('input', updateSuggestions);
@@ -1033,7 +1097,7 @@ Portfolio facts:
     chatInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        handleUserInput(chatInput.value.trim());
+        submitChatMessage();
       }
     });
   }
