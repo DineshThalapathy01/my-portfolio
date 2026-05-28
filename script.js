@@ -546,7 +546,7 @@
     const decisionItems = [
       { label: 'Yes, draft email', value: 'yes' },
       { label: 'No, continue chat', value: 'no' },
-      { label: 'Mail Dinesh', value: 'mail', className: 'suggestion-item-action-alt' },
+      { label: 'Email Draft', value: 'mail', className: 'suggestion-item-action-alt' },
       { label: 'Open Contact Page', value: 'contact-page', className: 'suggestion-item-action-alt' },
     ];
 
