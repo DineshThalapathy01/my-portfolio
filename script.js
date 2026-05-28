@@ -357,6 +357,7 @@
   let stickySuggestions = false;
   let emailJsInitialized = false;
   let lastSuggestionSignature = '';
+  const SUGGESTION_COUNTDOWN_SECONDS = 5;
 
   const clearSuggestionCountdown = () => {
     if (suggestionCountdownInterval) {
@@ -368,7 +369,7 @@
   const startSuggestionCountdown = () => {
     if (stickySuggestions) return;
     clearSuggestionCountdown();
-    suggestionCountdownValue = 10;
+    suggestionCountdownValue = SUGGESTION_COUNTDOWN_SECONDS;
     setStatus(`${suggestionCountdownValue}s`);
     suggestionCountdownInterval = window.setInterval(() => {
       suggestionCountdownValue -= 1;
@@ -522,9 +523,9 @@
     contactPageUrl: isTemplatesPage ? 'contact.html' : 'templates/contact.html',
   };
   const EMAILJS_CONFIG = {
-    publicKey: '',
-    serviceId: '',
-    templateId: '',
+    publicKey: window.LEO_EMAIL_CONFIG?.publicKey || '',
+    serviceId: window.LEO_EMAIL_CONFIG?.serviceId || '',
+    templateId: window.LEO_EMAIL_CONFIG?.templateId || '',
   };
 
   const hasRealConfigValue = (value) => typeof value === 'string' && value.trim() !== '' && !/^YOUR_/i.test(value.trim());
@@ -533,7 +534,19 @@
   const isEmailJsConfigured = () => hasRealConfigValue(EMAILJS_CONFIG.publicKey)
     && hasRealConfigValue(EMAILJS_CONFIG.serviceId)
     && hasRealConfigValue(EMAILJS_CONFIG.templateId);
-  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  const normalizeEmail = (value) => value.trim().toLowerCase();
+  const isValidEmail = (value) => {
+    const email = normalizeEmail(value);
+    if (!email || email.length > 254 || email.includes(' ')) return false;
+    if (!/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email)) return false;
+    if (email.includes('..')) return false;
+    const [localPart, domain] = email.split('@');
+    if (!localPart || !domain) return false;
+    if (localPart.startsWith('.') || localPart.endsWith('.')) return false;
+    if (domain.startsWith('-') || domain.endsWith('-')) return false;
+    if (domain.split('.').some((part) => !part || part.startsWith('-') || part.endsWith('-'))) return false;
+    return true;
+  };
 
   const getContactDetailsText = () => {
     const detailLines = [`📧 ${CONTACT_INFO.email}`];
@@ -553,10 +566,41 @@
     return true;
   };
 
+  const buildDraftBody = ({ senderEmail, subject, body }) => {
+    const normalizedSender = senderEmail ? normalizeEmail(senderEmail) : '';
+    const messageBody = body.trim();
+    return {
+      subject: subject.trim(),
+      body: normalizedSender
+        ? `${messageBody}\n\nSender email: ${normalizedSender}`
+        : messageBody,
+    };
+  };
+
   const openMailtoDraft = ({ senderEmail, subject, body }) => {
-    const composedBody = `${body}\n\nSender email: ${senderEmail}`;
-    const mailtoUrl = `mailto:${CONTACT_INFO.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(composedBody)}`;
+    const draft = buildDraftBody({ senderEmail, subject, body });
+    const mailtoUrl = `mailto:${CONTACT_INFO.email}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`;
     window.location.href = mailtoUrl;
+  };
+
+  const getGmailComposeUrl = ({ senderEmail, subject, body }) => {
+    const draft = buildDraftBody({ senderEmail, subject, body });
+    const params = new URLSearchParams({
+      view: 'cm',
+      fs: '1',
+      to: CONTACT_INFO.email,
+      su: draft.subject,
+      body: draft.body,
+    });
+    return `https://mail.google.com/mail/?${params.toString()}`;
+  };
+
+  const openGmailDraft = (draftData) => {
+    const gmailUrl = getGmailComposeUrl(draftData);
+    const popup = window.open(gmailUrl, '_blank', 'noopener');
+    if (!popup) {
+      window.location.href = gmailUrl;
+    }
   };
 
   const lockInput = (placeholder) => {
@@ -591,7 +635,11 @@
   const handleQuickContactAction = (action) => {
     resetEmailFlow();
     if (action === 'mail') {
-      window.location.href = `mailto:${CONTACT_INFO.email}`;
+      openGmailDraft({
+        senderEmail: '',
+        subject: '',
+        body: '',
+      });
       return;
     }
     if (action === 'contact-page') {
@@ -601,6 +649,23 @@
     if (action === 'call' && hasPhoneNumber()) {
       window.location.href = normalizePhoneHref();
     }
+  };
+
+  const showEmailFallbackSuggestions = (draftData) => {
+    renderSuggestions([
+      { label: 'Open Gmail Draft', value: 'gmail' },
+      { label: 'Open Mail App', value: 'mail-app', className: 'suggestion-item-action-alt' },
+    ], {
+      sticky: true,
+      variant: 'actions',
+      onSelect: (value) => {
+        if (value === 'gmail') {
+          openGmailDraft(draftData);
+          return;
+        }
+        openMailtoDraft(draftData);
+      },
+    });
   };
 
   const showEmailDecisionSuggestions = () => {
@@ -704,13 +769,13 @@
     if (emailFlow === 'ASK_SENDER_EMAIL') {
       if (!text.trim()) return true;
       if (!isValidEmail(text)) {
-        appendChatMessage('Please enter a valid email address so Dinesh can reply to you.', 'bot');
+        appendChatMessage('Please enter a proper email address like name@example.com so Dinesh can reply to you.', 'bot');
         showStaticPromptChip('✏️ Type your email address...');
         return true;
       }
-      emailData.senderEmail = text.trim();
+      emailData.senderEmail = normalizeEmail(text);
       emailFlow = 'ASK_SUBJECT';
-      appendChatMessage(text, 'user');
+      appendChatMessage(normalizeEmail(text), 'user');
       chatInput.value = '';
       showEmailPrompt('What is the subject of your email?', 'Type subject here...');
       return true;
@@ -735,6 +800,12 @@
       lockInput('Sending email...');
       hideSuggestionPanel(true);
       startTypingIndicator();
+      let shouldShowDraftFallback = false;
+      const draftData = {
+        senderEmail: emailData.senderEmail,
+        subject: emailData.subject,
+        body: emailData.body,
+      };
       try {
         if (ensureEmailJsInitialized()) {
           await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
@@ -749,15 +820,20 @@
           appendChatMessage('✅ Email sent successfully! Dinesh will get back to you soon.', 'bot');
         } else {
           stopTypingIndicator();
-          openMailtoDraft(emailData);
-          appendChatMessage(`📨 I opened your mail app with Dinesh's email ready. If you want direct in-chat sending later, add your EmailJS keys in script.js.`, 'bot');
+          shouldShowDraftFallback = true;
+          openGmailDraft(draftData);
+          appendChatMessage('📨 Direct in-chat sending is ready once EmailJS keys are added. For now, I opened a Gmail draft with Dinesh\'s email, subject, and message already filled in.', 'bot');
         }
       } catch (err) {
         stopTypingIndicator();
-        openMailtoDraft(emailData);
-        appendChatMessage(`❌ Direct send failed, so I opened your mail app instead. You can also email Dinesh at ${CONTACT_INFO.email}.`, 'bot');
+        shouldShowDraftFallback = true;
+        openGmailDraft(draftData);
+        appendChatMessage(`❌ Direct send failed, so I opened a Gmail draft with the details filled in. You can also email Dinesh at ${CONTACT_INFO.email}.`, 'bot');
       }
       resetEmailFlow();
+      if (shouldShowDraftFallback) {
+        showEmailFallbackSuggestions(draftData);
+      }
       return true;
     }
 

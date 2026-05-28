@@ -26,65 +26,142 @@
     </header>
 
     <main class="page-main home-page">
-        <section class="hero-panel">
-            <div class="hero-copy">
+        <section class="home-hero">
+            <div class="home-hero-copy">
                 <span class="eyebrow">Full Stack Java Developer</span>
-                <h1>Career Objective:</h1>
-                <p>I am passionate about using my experience to contribute effectively to projects while continuously seeking opportunities to expand my expertise. Eager to take on new challenges, I am committed to making a positive impact in my next role, where I can showcase my skills and grow my knowledge.</p>
+                <p class="home-kicker">Secure products. Clear workflows. Real users.</p>
+                <h1>Building Java and Angular platforms that feel reliable from the first login to the final approval.</h1>
+                <p class="home-summary">I design and deliver enterprise and government-facing applications with Spring Boot, Angular, PostgreSQL, workflow logic, RBAC, and production-minded backend architecture. The focus is always the same: build systems people can trust to work every day.</p>
                 <div class="hero-actions">
-                    <a class="btn btn-primary" href="templates/projects.html">View Projects</a>
-                    <a class="btn btn-secondary" href="templates/contact.html">Contact</a>
+                    <a class="btn btn-primary" href="templates/projects.html">Explore Projects</a>
+                    <a class="btn btn-secondary" href="templates/contact.html">Hire / Contact</a>
+                </div>
+                <div class="home-chip-row">
+                    <span class="home-chip">Java 17</span>
+                    <span class="home-chip">Spring Boot</span>
+                    <span class="home-chip">Angular 16 / 19 / 20</span>
+                    <span class="home-chip">JWT + RBAC</span>
+                    <span class="home-chip">PostgreSQL</span>
+                    <span class="home-chip">GCP Deployments</span>
                 </div>
             </div>
 
-            <aside class="hero-card">
-                <div class="profile-avatar">
-                    <img src="assets/dinesh.png" alt="Dinesh Kumar">
-                </div>
-                <h2>Software Developer</h2>
-                <p>Java Full Stack | Angular | Government workflow systems | RBAC approvals</p>
-                <div class="stat-grid">
-                    <div class="stat">
-                        <span class="stat-title">Experience</span>
-                        <span class="stat-value" id="experience"></span>
+            <aside class="home-profile-card">
+                <div class="home-profile-top">
+                    <div class="profile-avatar home-profile-avatar">
+                        <img src="assets/dinesh.png" alt="Dinesh Kumar">
                     </div>
-                    <div class="stat">
-                        <span class="stat-title">Current Company</span>
-                        <span class="stat-value">Eagle Software India Private Limited</span>
+                    <div class="home-identity">
+                        <span class="home-role-tag">Software Developer</span>
+                        <h2>S Dinesh Kumar</h2>
+                        <p>Java Full Stack developer focused on workflow-heavy applications, secure backend systems, and Angular interfaces that stay maintainable as products grow.</p>
                     </div>
                 </div>
-                
+                <div class="home-metric-stack">
+                    <article class="home-metric-card">
+                        <span class="home-metric-label">Experience</span>
+                        <strong class="home-metric-value" id="experience"></strong>
+                    </article>
+                    <article class="home-metric-card">
+                        <span class="home-metric-label">Current Company</span>
+                        <strong class="home-metric-value">Eagle Software India Pvt Ltd</strong>
+                    </article>
+                    <article class="home-metric-card">
+                        <span class="home-metric-label">Base</span>
+                        <strong class="home-metric-value">Chennai, India</strong>
+                    </article>
+                </div>
             </aside>
         </section>
 
-        <!-- Portfolio focus section intentionally removed per user request -->
+        <section class="home-strip-grid">
+            <article class="home-panel home-panel-story">
+                <span class="home-panel-label">Career Direction</span>
+                <h2>Practical engineering with business context.</h2>
+                <p>I enjoy translating complex requirements into backend logic, approvals, integrations, and UI flows that teams can actually operate. I care about clarity in code, stability in delivery, and making large systems easier to understand.</p>
+            </article>
+            <article class="home-panel home-panel-projects">
+                <span class="home-panel-label">Featured Work</span>
+                <div class="home-mini-list">
+                    <a href="templates/bbocw.html">BBOCW welfare platform</a>
+                    <a href="templates/tncsc.html">TNCSC enterprise access control</a>
+                    <a href="templates/sta_explanation.html">Smart Travellers mobile app</a>
+                </div>
+            </article>
+        </section>
 
-        <section class="section-card">
-            <h2>Experience Summary</h2>
-            <ul>
-                <li>Strong experience in Java/J2EE technologies for developing scalable enterprise and government-based web applications.</li>
-                <li>Hands-on experience in developing secure and dynamic applications using Core Java, Java 17, Spring Boot, Spring Framework, Spring MVC, Hibernate, JPA, and Java Microservices architecture.</li>
-                <li>Experienced in building RESTful web services and backend APIs using Spring Boot with secure authentication and authorization mechanisms.</li>
-                <li>Worked extensively on enterprise authentication systems using Spring Security, JWT (Access Token &amp; Refresh Token), CAPTCHA validation, encryption, and role-based access control (RBAC).</li>
-                <li>Good experience in frontend development using Angular (16, 19, 20), HTML5, CSS3, JavaScript, Bootstrap, and reactive forms integration with REST APIs.</li>
-                <li>Developed and maintained government workflow-based applications with dynamic approval configurations, master setups, and multi-role access management.</li>
-                <li>Experience in implementing Aadhaar Integration features including Aadhaar OTP, Aadhaar e-KYC, and Aadhaar Biometric authentication with UIDAI and RD Service integrations.</li>
-                <li>Strong knowledge in database design and management using PostgreSQL, Oracle, and MySQL with JDBC, JPA, indexed queries, and performance optimization.</li>
-                <li>Experience in developing microservice-based architecture with separate Gateway and Core Service implementations for secure enterprise applications.</li>
-                <li>Worked on workflow-driven financial modules including Loan Processing, Payroll Support, EDLI/FBF Beneficiary Systems, and Approval Management Systems.</li>
-                <li>Hands-on experience in GCP-hosted UAT and LIVE application deployment support and environment handling.</li>
-                <li>Experience in developing secure file handling and DMS (Document Management System) modules with backend validation and storage processing.</li>
-                <li>Worked with Thymeleaf for server-side rendering and dynamic UI generation in Spring Boot applications.</li>
-                <li>Good experience with Git, GitHub, and version control workflows for collaborative development and code management.</li>
-                <li>Experience working in Agile team environments, client coordination meetings, and enterprise-level application development.</li>
-                <li>Strong practical knowledge in AI-assisted development and prompt engineering using tools such as GitHub Copilot, OpenAI Codex, and Amazon Q for improving productivity, debugging, logical implementation, and faster application development.</li>
-                <li>Skilled in converting business requirements into optimized backend logic, workflow structures, and scalable application architecture.</li>
-            </ul>
+        <section class="home-capability-section">
+            <div class="home-section-heading">
+                <span class="eyebrow">What I Bring</span>
+                <h2>Delivery strengths shaped by real production work</h2>
+            </div>
+            <div class="home-capability-grid">
+                <article class="home-capability-card">
+                    <h3>Backend Architecture</h3>
+                    <p>Spring Boot services, REST APIs, layered backend design, validation, secure data handling, and production-ready business logic.</p>
+                </article>
+                <article class="home-capability-card">
+                    <h3>Workflow Systems</h3>
+                    <p>Approval flows, role-based access control, configurable master setups, and enterprise processes with strict business rules.</p>
+                </article>
+                <article class="home-capability-card">
+                    <h3>Frontend Delivery</h3>
+                    <p>Angular applications with reactive forms, API integration, responsive layouts, and maintainable component structure.</p>
+                </article>
+                <article class="home-capability-card">
+                    <h3>Platform Integrations</h3>
+                    <p>Aadhaar, JWT auth, database design, DMS flows, deployment support, and cross-team collaboration in enterprise environments.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="home-summary-section">
+            <div class="home-section-heading">
+                <span class="eyebrow">Experience Snapshot</span>
+                <h2>Core strengths across backend, security, UI, and deployment</h2>
+            </div>
+            <div class="home-summary-grid">
+                <article class="home-summary-card">
+                    <h3>Application Engineering</h3>
+                    <ul>
+                        <li>Java, Spring Boot, Spring MVC, Hibernate, JPA, and microservice-oriented backend development.</li>
+                        <li>RESTful APIs with secure authentication, authorization, token handling, and validation flows.</li>
+                        <li>Document management, file processing, and server-side rendering with Thymeleaf where needed.</li>
+                    </ul>
+                </article>
+                <article class="home-summary-card">
+                    <h3>Enterprise Delivery</h3>
+                    <ul>
+                        <li>Angular frontend development with reactive forms, responsive layouts, and API-driven screens.</li>
+                        <li>Government and enterprise workflow modules covering RBAC, approvals, payroll, loan, and beneficiary systems.</li>
+                        <li>Database work with PostgreSQL, Oracle, and MySQL plus deployment support across UAT and LIVE environments.</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <section class="home-cta-panel">
+            <div>
+                <span class="home-panel-label">Next Step</span>
+                <h2>Looking for a developer who can own both the logic and the delivery?</h2>
+                <p>Take a look at the project details, then reach out if you want to discuss product work, engineering roles, or collaboration.</p>
+            </div>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="templates/about.html">About Me</a>
+                <a class="btn btn-secondary" href="templates/contact.html">Start a Conversation</a>
+            </div>
         </section>
     </main>
 
     <footer class="app-footer">Designed & Maintained by S Dinesh Kumar. Last updated: May 26, 2026.</footer>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+      window.LEO_EMAIL_CONFIG = window.LEO_EMAIL_CONFIG || {
+        publicKey: '',
+        serviceId: '',
+        templateId: '',
+      };
+    </script>
     <script src="script.js"></script>
 </body>
 
