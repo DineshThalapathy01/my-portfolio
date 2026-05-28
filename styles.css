@@ -1127,17 +1127,25 @@ figure {
     top: 0.55rem;
     right: 0.7rem;
     min-width: 42px;
-    padding: 0.22rem 0.5rem;
+    padding: 0.24rem 0.55rem;
     border-radius: 999px;
-    background: rgba(78, 212, 198, 0.08);
+    background: rgba(255, 255, 255, 0.92);
     color: var(--accent-text);
     font-weight: 700;
     text-align: right;
     font-size: 0.74rem;
     line-height: 1.2;
-    border: 1px solid rgba(78, 212, 198, 0.1);
-    box-shadow: none;
+    border: 1px solid rgba(78, 212, 198, 0.12);
+    box-shadow: 0 6px 16px rgba(14, 50, 74, 0.06);
     z-index: 2;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.chat-status.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* Email prompt chip — non-clickable, just shows current step */

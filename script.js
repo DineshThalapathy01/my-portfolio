@@ -270,7 +270,9 @@
   };
 
   const setStatus = (text) => {
-    if (chatStatus) chatStatus.textContent = text;
+    if (!chatStatus) return;
+    chatStatus.textContent = text;
+    chatStatus.classList.toggle('visible', Boolean(text));
   };
 
   const showSuggestionPanel = () => {
@@ -313,6 +315,7 @@
   let suggestionSelectHandler = null;
   let stickySuggestions = false;
   let emailJsInitialized = false;
+  let lastSuggestionSignature = '';
 
   const clearSuggestionCountdown = () => {
     if (suggestionCountdownInterval) {
@@ -397,12 +400,16 @@
     suggestionSelectHandler = onSelect;
     chatSuggestions.innerHTML = '';
     if (!items.length) {
+      lastSuggestionSignature = '';
       stickySuggestions = false;
       suggestionSelectHandler = null;
       chatSuggestions.classList.remove('active');
       hideSuggestionPanel(true);
       return;
     }
+    lastSuggestionSignature = `${variant}|${sticky}|${items.map((suggestion) => (
+      typeof suggestion === 'string' ? suggestion : suggestion.label
+    )).join('||')}`;
     items.forEach((suggestion, index) => {
       const suggestionData = typeof suggestion === 'string'
         ? { label: suggestion, value: suggestion }
@@ -444,7 +451,15 @@
       return;
     }
     if (emailFlow) return;
-    renderSuggestions(getSuggestions(chatInput.value.trim()));
+    const nextSuggestions = getSuggestions(chatInput.value.trim());
+    const nextSignature = `default|false|${nextSuggestions.join('||')}`;
+    const panelAlreadyActive = chatSuggestionsPanel && chatSuggestionsPanel.classList.contains('active');
+
+    if (panelAlreadyActive && !stickySuggestions && nextSignature === lastSuggestionSignature) {
+      return;
+    }
+
+    renderSuggestions(nextSuggestions);
   };
 
   // ── Email flow state machine ──────────────────────────────────────────────
@@ -1001,7 +1016,6 @@ Portfolio facts:
 
     chatInput.addEventListener('input', updateSuggestions);
     chatInput.addEventListener('focus', updateSuggestions);
-    chatInput.addEventListener('click', updateSuggestions);
     chatInput.addEventListener('blur', () => {
       suggestionHideTimeout = window.setTimeout(() => {
         if (stickySuggestions) return;
