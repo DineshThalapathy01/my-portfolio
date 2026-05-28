@@ -822,13 +822,13 @@
           stopTypingIndicator();
           shouldShowDraftFallback = true;
           openGmailDraft(draftData);
-          appendChatMessage('📨 Direct in-chat sending is ready once EmailJS keys are added. For now, I opened a Gmail draft with Dinesh\'s email, subject, and message already filled in.', 'bot');
+          appendChatMessage('📨 I opened a Gmail draft with Dinesh\'s email, subject, and message already filled in.', 'bot');
         }
       } catch (err) {
         stopTypingIndicator();
         shouldShowDraftFallback = true;
         openGmailDraft(draftData);
-        appendChatMessage(`❌ Direct send failed, so I opened a Gmail draft with the details filled in. You can also email Dinesh at ${CONTACT_INFO.email}.`, 'bot');
+        appendChatMessage(`❌ I could not send it directly, so I opened a Gmail draft with the details already filled in. You can also email Dinesh at ${CONTACT_INFO.email}.`, 'bot');
       }
       resetEmailFlow();
       if (shouldShowDraftFallback) {
