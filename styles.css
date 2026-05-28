@@ -1114,6 +1114,20 @@ figure {
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
+/* Email prompt chip — non-clickable, just shows current step */
+.email-prompt-chip {
+    cursor: default;
+    background: rgba(78, 212, 198, 0.18);
+    color: var(--accent-text);
+    font-weight: 700;
+    border: 1px solid rgba(78, 212, 198, 0.35);
+    pointer-events: none;
+}
+.email-prompt-chip:hover {
+    background: rgba(78, 212, 198, 0.18);
+    transform: none;
+}
+
 /* Scrollbar styling for suggestions */
 .chat-suggestions::-webkit-scrollbar {
     width: 6px;

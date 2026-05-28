@@ -416,6 +416,114 @@
     renderSuggestions(getSuggestions(chatInput.value.trim()));
   };
 
+  // ── Email flow state machine ──────────────────────────────────────────────
+  // States: null | 'ASK_CONFIRM' | 'ASK_SUBJECT' | 'ASK_BODY' | 'SENDING'
+  let emailFlow = null;
+  let emailData = { subject: '', body: '' };
+
+  const CONTACT_DETAILS = `📧 dineshkummarnavarasam@gmail.com\n📍 Chennai, India\n🔗 https://dineshkumar13dk.github.io/profile/`;
+
+  const lockInput = (placeholder) => {
+    chatInput.disabled = true;
+    chatInput.placeholder = placeholder;
+    if (chatSendButton) chatSendButton.disabled = true;
+    renderSuggestions([]);
+  };
+
+  const unlockInput = () => {
+    chatInput.disabled = false;
+    chatInput.placeholder = 'Ask me about my work...';
+    if (chatSendButton) chatSendButton.disabled = false;
+  };
+
+  const showEmailPrompt = (promptText, inputPlaceholder) => {
+    appendChatMessage(promptText, 'bot');
+    // Show the prompt as a suggestion chip so it's visible in front
+    if (chatSuggestions) {
+      chatSuggestions.innerHTML = '';
+      const chip = document.createElement('div');
+      chip.className = 'suggestion-item email-prompt-chip';
+      chip.textContent = '✏️ ' + inputPlaceholder;
+      chatSuggestions.appendChild(chip);
+      chatSuggestions.classList.add('active');
+      showSuggestionPanel();
+    }
+    lockInput(inputPlaceholder);
+    chatInput.disabled = false; // allow typing but keep suggestion visible
+  };
+
+  const handleEmailFlow = async (text) => {
+    if (emailFlow === 'ASK_CONFIRM') {
+      const yes = /^(yes|yeah|sure|ok|okay|send|yep|y)$/i.test(text.trim());
+      const no = /^(no|nope|cancel|nah|n)$/i.test(text.trim());
+      if (yes) {
+        emailFlow = 'ASK_SUBJECT';
+        appendChatMessage(text, 'user');
+        chatInput.value = '';
+        showEmailPrompt('What is the subject of your email?', 'Type subject here...');
+      } else if (no) {
+        emailFlow = null;
+        appendChatMessage(text, 'user');
+        chatInput.value = '';
+        unlockInput();
+        renderSuggestions([]);
+        hideSuggestionPanel();
+        startTypingIndicator();
+        setTimeout(() => {
+          stopTypingIndicator();
+          appendChatMessage('No problem! Feel free to ask anything else.', 'bot');
+        }, 1000);
+      } else {
+        appendChatMessage(text, 'user');
+        chatInput.value = '';
+        appendChatMessage('Please reply with yes or no.', 'bot');
+      }
+      return true;
+    }
+
+    if (emailFlow === 'ASK_SUBJECT') {
+      if (!text.trim()) return true;
+      emailData.subject = text.trim();
+      emailFlow = 'ASK_BODY';
+      appendChatMessage(text, 'user');
+      chatInput.value = '';
+      showEmailPrompt('Got it! Now type your message body:', 'Type your message here...');
+      return true;
+    }
+
+    if (emailFlow === 'ASK_BODY') {
+      if (!text.trim()) return true;
+      emailData.body = text.trim();
+      emailFlow = 'SENDING';
+      appendChatMessage(text, 'user');
+      chatInput.value = '';
+      lockInput('Sending email...');
+      renderSuggestions([]);
+      hideSuggestionPanel();
+      startTypingIndicator();
+      try {
+        await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+          to_email: 'dineshkummarnavarasam@gmail.com',
+          subject: emailData.subject,
+          message: emailData.body,
+          from_name: 'Portfolio Visitor',
+        });
+        stopTypingIndicator();
+        appendChatMessage('✅ Email sent successfully! Dinesh will get back to you soon.', 'bot');
+      } catch (err) {
+        stopTypingIndicator();
+        appendChatMessage('❌ Failed to send email. Please try directly at dineshkummarnavarasam@gmail.com', 'bot');
+      }
+      emailFlow = null;
+      emailData = { subject: '', body: '' };
+      unlockInput();
+      return true;
+    }
+
+    return false;
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   const localResponses = (input) => {
     const name = 'S Dinesh Kumar';
     const lower = input.toLowerCase();
@@ -474,7 +582,7 @@
       return `${name} is a Full Stack Developer specializing in Angular, Spring Boot, and enterprise systems.`;
     }
     if (/\b(contact|email|phone|reach you|contact details)\b/.test(lower)) {
-      return `You can contact ${name} through the portfolio contact section, where email and messaging options are listed.`;
+      return `__CONTACT_TRIGGER__`;
     }
     if (/\b(resume|cv|bio|biography|career|employment|work history)\b/.test(lower)) {
       return `${name} is a Full Stack Developer with 2+ years of experience in Angular, Java Spring Boot, PostgreSQL, REST APIs, Flutter, and government systems. Key projects include BBOCW, TNCSC, Smart Travellers, chatbot, and regression automation.`;
@@ -519,6 +627,13 @@
 
   const handleUserInput = async (text) => {
     if (!text) return;
+
+    // If email flow is active, route to it first
+    if (emailFlow) {
+      const handled = await handleEmailFlow(text);
+      if (handled) return;
+    }
+
     if (isBotTyping) {
       setStatus('LEO is replying now. Please wait for the answer.');
       return;
@@ -554,8 +669,16 @@
     const delay = 3000;
 
     setTimeout(() => {
-      appendChatMessage(response, 'bot');
       stopTypingIndicator();
+      if (response === '__CONTACT_TRIGGER__') {
+        appendChatMessage(`Here are Dinesh's contact details:\n${CONTACT_DETAILS}`, 'bot');
+        setTimeout(() => {
+          emailFlow = 'ASK_CONFIRM';
+          showEmailPrompt('Would you like to send an email to Dinesh right now?', 'Type yes or no...');
+        }, 600);
+      } else {
+        appendChatMessage(response, 'bot');
+      }
     }, delay);
   };
 
