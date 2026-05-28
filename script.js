@@ -278,7 +278,8 @@
     chatSuggestionsPanel.classList.add('active');
   };
 
-  const hideSuggestionPanel = () => {
+  const hideSuggestionPanel = (force = false) => {
+    if (stickySuggestions && !force) return;
     if (!chatSuggestionsPanel) return;
     chatSuggestionsPanel.classList.remove('active');
     clearSuggestionCountdown();
@@ -309,6 +310,9 @@
   let suggestionCountdownValue = 0;
   let typingInterval = null;
   let isBotTyping = false;
+  let suggestionSelectHandler = null;
+  let stickySuggestions = false;
+  let emailJsInitialized = false;
 
   const clearSuggestionCountdown = () => {
     if (suggestionCountdownInterval) {
@@ -318,6 +322,7 @@
   };
 
   const startSuggestionCountdown = () => {
+    if (stickySuggestions) return;
     clearSuggestionCountdown();
     suggestionCountdownValue = 10;
     setStatus(`${suggestionCountdownValue}s`);
@@ -385,43 +390,113 @@
     return filtered.slice(0, 1);
   };
 
-  const renderSuggestions = (items) => {
+  const renderSuggestions = (items, options = {}) => {
+    const { sticky = false, onSelect = null, variant = 'default' } = options;
     if (!chatSuggestions) return;
+    stickySuggestions = sticky;
+    suggestionSelectHandler = onSelect;
     chatSuggestions.innerHTML = '';
     if (!items.length) {
+      stickySuggestions = false;
+      suggestionSelectHandler = null;
       chatSuggestions.classList.remove('active');
-      hideSuggestionPanel();
+      hideSuggestionPanel(true);
       return;
     }
     items.forEach((suggestion, index) => {
+      const suggestionData = typeof suggestion === 'string'
+        ? { label: suggestion, value: suggestion }
+        : suggestion;
       const item = document.createElement('button');
       item.type = 'button';
-      item.className = 'suggestion-item';
-      item.textContent = suggestion;
+      item.className = `suggestion-item${variant === 'actions' ? ' suggestion-item-action' : ''}${suggestionData.className ? ` ${suggestionData.className}` : ''}`;
+      item.textContent = suggestionData.label;
       item.style.animation = `slideUpIn 0.2s ease ${index * 50}ms both`;
+      if (suggestionData.disabled) {
+        item.disabled = true;
+      }
       item.addEventListener('click', () => {
-        chatInput.value = suggestion;
         clearSuggestionCountdown();
+        if (suggestionData.disabled) return;
+        if (suggestionSelectHandler) {
+          suggestionSelectHandler(suggestionData.value, suggestionData);
+          return;
+        }
+        chatInput.value = suggestionData.value;
         renderSuggestions([]);
-        handleUserInput(suggestion);
+        handleUserInput(suggestionData.value);
       });
       chatSuggestions.appendChild(item);
     });
     chatSuggestions.classList.add('active');
     showSuggestionPanel();
+    if (sticky) {
+      clearSuggestionCountdown();
+      setStatus('');
+      return;
+    }
     startSuggestionCountdown();
   };
 
   const updateSuggestions = () => {
+    if (emailFlow === 'ASK_CONFIRM') {
+      showEmailDecisionSuggestions();
+      return;
+    }
+    if (emailFlow) return;
     renderSuggestions(getSuggestions(chatInput.value.trim()));
   };
 
   // ── Email flow state machine ──────────────────────────────────────────────
-  // States: null | 'ASK_CONFIRM' | 'ASK_SUBJECT' | 'ASK_BODY' | 'SENDING'
+  // States: null | 'ASK_CONFIRM' | 'ASK_SENDER_EMAIL' | 'ASK_SUBJECT' | 'ASK_BODY' | 'SENDING'
   let emailFlow = null;
-  let emailData = { subject: '', body: '' };
+  let emailData = { senderEmail: '', subject: '', body: '' };
 
-  const CONTACT_DETAILS = `📧 dineshkummarnavarasam@gmail.com\n📍 Chennai, India\n🔗 https://dineshthalapathy01.github.io/my-portfolio/`;
+  const isTemplatesPage = window.location.pathname.includes('/templates/');
+  const CONTACT_INFO = {
+    email: 'dineshkumarnavarasam@gmail.com',
+    phone: '', // Add your mobile number here to enable call actions across the site.
+    location: 'Chennai, India',
+    portfolioUrl: 'https://dineshthalapathy01.github.io/my-portfolio/',
+    contactPageUrl: isTemplatesPage ? 'contact.html' : 'templates/contact.html',
+  };
+  const EMAILJS_CONFIG = {
+    publicKey: '',
+    serviceId: '',
+    templateId: '',
+  };
+
+  const hasRealConfigValue = (value) => typeof value === 'string' && value.trim() !== '' && !/^YOUR_/i.test(value.trim());
+  const hasPhoneNumber = () => Boolean(CONTACT_INFO.phone && CONTACT_INFO.phone.trim());
+  const normalizePhoneHref = () => `tel:${CONTACT_INFO.phone.replace(/[^\d+]/g, '')}`;
+  const isEmailJsConfigured = () => hasRealConfigValue(EMAILJS_CONFIG.publicKey)
+    && hasRealConfigValue(EMAILJS_CONFIG.serviceId)
+    && hasRealConfigValue(EMAILJS_CONFIG.templateId);
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
+  const getContactDetailsText = () => {
+    const detailLines = [`📧 ${CONTACT_INFO.email}`];
+    if (hasPhoneNumber()) {
+      detailLines.push(`📱 ${CONTACT_INFO.phone}`);
+    }
+    detailLines.push(`📍 ${CONTACT_INFO.location}`);
+    detailLines.push(`🔗 ${CONTACT_INFO.portfolioUrl}`);
+    return detailLines.join('\n');
+  };
+
+  const ensureEmailJsInitialized = () => {
+    if (emailJsInitialized) return true;
+    if (!window.emailjs || !isEmailJsConfigured()) return false;
+    window.emailjs.init({ publicKey: EMAILJS_CONFIG.publicKey });
+    emailJsInitialized = true;
+    return true;
+  };
+
+  const openMailtoDraft = ({ senderEmail, subject, body }) => {
+    const composedBody = `${body}\n\nSender email: ${senderEmail}`;
+    const mailtoUrl = `mailto:${CONTACT_INFO.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(composedBody)}`;
+    window.location.href = mailtoUrl;
+  };
 
   const lockInput = (placeholder) => {
     chatInput.disabled = true;
@@ -436,20 +511,106 @@
     if (chatSendButton) chatSendButton.disabled = false;
   };
 
+  const resetEmailFlow = () => {
+    emailFlow = null;
+    emailData = { senderEmail: '', subject: '', body: '' };
+    unlockInput();
+    renderSuggestions([]);
+  };
+
+  const showStaticPromptChip = (label) => {
+    renderSuggestions([{
+      label,
+      value: label,
+      className: 'email-prompt-chip',
+      disabled: true,
+    }], { sticky: true });
+  };
+
+  const handleQuickContactAction = (action) => {
+    resetEmailFlow();
+    if (action === 'mail') {
+      window.location.href = `mailto:${CONTACT_INFO.email}`;
+      return;
+    }
+    if (action === 'contact-page') {
+      window.location.href = CONTACT_INFO.contactPageUrl;
+      return;
+    }
+    if (action === 'call' && hasPhoneNumber()) {
+      window.location.href = normalizePhoneHref();
+    }
+  };
+
+  const showEmailDecisionSuggestions = () => {
+    const decisionItems = [
+      { label: 'Yes, draft email', value: 'yes' },
+      { label: 'No, continue chat', value: 'no' },
+      { label: 'Mail Dinesh', value: 'mail', className: 'suggestion-item-action-alt' },
+      { label: 'Open Contact Page', value: 'contact-page', className: 'suggestion-item-action-alt' },
+    ];
+
+    if (hasPhoneNumber()) {
+      decisionItems.splice(2, 0, {
+        label: 'Call Dinesh',
+        value: 'call',
+        className: 'suggestion-item-action-alt',
+      });
+    }
+
+    renderSuggestions(decisionItems, {
+      sticky: true,
+      variant: 'actions',
+      onSelect: (value) => {
+        if (value === 'yes' || value === 'no') {
+          handleUserInput(value);
+          return;
+        }
+        handleQuickContactAction(value);
+      },
+    });
+  };
+
+  const populateContactDetails = () => {
+    const emailLink = document.getElementById('contactEmailLink');
+    const phoneItem = document.getElementById('contactPhoneItem');
+    const phoneLink = document.getElementById('contactPhoneLink');
+    const locationText = document.getElementById('contactLocationText');
+    const portfolioLink = document.getElementById('contactPortfolioLink');
+
+    if (emailLink) {
+      emailLink.href = `mailto:${CONTACT_INFO.email}`;
+      emailLink.textContent = CONTACT_INFO.email;
+    }
+
+    if (locationText) {
+      locationText.textContent = CONTACT_INFO.location;
+    }
+
+    if (portfolioLink) {
+      portfolioLink.href = CONTACT_INFO.portfolioUrl;
+      portfolioLink.textContent = CONTACT_INFO.portfolioUrl;
+    }
+
+    if (phoneItem && phoneLink) {
+      if (hasPhoneNumber()) {
+        phoneItem.hidden = false;
+        phoneLink.href = normalizePhoneHref();
+        phoneLink.textContent = CONTACT_INFO.phone;
+      } else {
+        phoneItem.hidden = true;
+      }
+    }
+  };
+
+  populateContactDetails();
+
   const showEmailPrompt = (promptText, inputPlaceholder) => {
     appendChatMessage(promptText, 'bot');
-    // Show the prompt as a suggestion chip so it's visible in front
-    if (chatSuggestions) {
-      chatSuggestions.innerHTML = '';
-      const chip = document.createElement('div');
-      chip.className = 'suggestion-item email-prompt-chip';
-      chip.textContent = '✏️ ' + inputPlaceholder;
-      chatSuggestions.appendChild(chip);
-      chatSuggestions.classList.add('active');
-      showSuggestionPanel();
-    }
-    lockInput(inputPlaceholder);
-    chatInput.disabled = false; // allow typing but keep suggestion visible
+    unlockInput();
+    chatInput.placeholder = inputPlaceholder;
+    showStaticPromptChip(`✏️ ${inputPlaceholder}`);
+    chatInput.focus();
   };
 
   const handleEmailFlow = async (text) => {
@@ -457,27 +618,40 @@
       const yes = /^(yes|yeah|sure|ok|okay|send|yep|y)$/i.test(text.trim());
       const no = /^(no|nope|cancel|nah|n)$/i.test(text.trim());
       if (yes) {
-        emailFlow = 'ASK_SUBJECT';
+        emailFlow = 'ASK_SENDER_EMAIL';
         appendChatMessage(text, 'user');
         chatInput.value = '';
-        showEmailPrompt('What is the subject of your email?', 'Type subject here...');
-      } else if (no) {
-        emailFlow = null;
+        showEmailPrompt('Share your email address so Dinesh knows where to reply.', 'Type your email address...');
+        return true;
+      }
+      if (no) {
         appendChatMessage(text, 'user');
         chatInput.value = '';
-        unlockInput();
-        renderSuggestions([]);
-        hideSuggestionPanel();
+        resetEmailFlow();
         startTypingIndicator();
         setTimeout(() => {
           stopTypingIndicator();
           appendChatMessage('No problem! Feel free to ask anything else.', 'bot');
         }, 1000);
-      } else {
-        appendChatMessage(text, 'user');
-        chatInput.value = '';
-        appendChatMessage('Please reply with yes or no.', 'bot');
+        return true;
       }
+
+      resetEmailFlow();
+      return false;
+    }
+
+    if (emailFlow === 'ASK_SENDER_EMAIL') {
+      if (!text.trim()) return true;
+      if (!isValidEmail(text)) {
+        appendChatMessage('Please enter a valid email address so Dinesh can reply to you.', 'bot');
+        showStaticPromptChip('✏️ Type your email address...');
+        return true;
+      }
+      emailData.senderEmail = text.trim();
+      emailFlow = 'ASK_SUBJECT';
+      appendChatMessage(text, 'user');
+      chatInput.value = '';
+      showEmailPrompt('What is the subject of your email?', 'Type subject here...');
       return true;
     }
 
@@ -498,25 +672,31 @@
       appendChatMessage(text, 'user');
       chatInput.value = '';
       lockInput('Sending email...');
-      renderSuggestions([]);
-      hideSuggestionPanel();
+      hideSuggestionPanel(true);
       startTypingIndicator();
       try {
-        await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
-          to_email: 'dineshkummarnavarasam@gmail.com',
-          subject: emailData.subject,
-          message: emailData.body,
-          from_name: 'Portfolio Visitor',
-        });
-        stopTypingIndicator();
-        appendChatMessage('✅ Email sent successfully! Dinesh will get back to you soon.', 'bot');
+        if (ensureEmailJsInitialized()) {
+          await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+            to_email: CONTACT_INFO.email,
+            subject: emailData.subject,
+            message: emailData.body,
+            from_name: 'Portfolio Visitor',
+            from_email: emailData.senderEmail,
+            reply_to: emailData.senderEmail,
+          });
+          stopTypingIndicator();
+          appendChatMessage('✅ Email sent successfully! Dinesh will get back to you soon.', 'bot');
+        } else {
+          stopTypingIndicator();
+          openMailtoDraft(emailData);
+          appendChatMessage(`📨 I opened your mail app with Dinesh's email ready. If you want direct in-chat sending later, add your EmailJS keys in script.js.`, 'bot');
+        }
       } catch (err) {
         stopTypingIndicator();
-        appendChatMessage('❌ Failed to send email. Please try directly at dineshkummarnavarasam@gmail.com', 'bot');
+        openMailtoDraft(emailData);
+        appendChatMessage(`❌ Direct send failed, so I opened your mail app instead. You can also email Dinesh at ${CONTACT_INFO.email}.`, 'bot');
       }
-      emailFlow = null;
-      emailData = { subject: '', body: '' };
-      unlockInput();
+      resetEmailFlow();
       return true;
     }
 
@@ -700,10 +880,11 @@ Portfolio facts:
     setTimeout(() => {
       stopTypingIndicator();
       if (response === '__CONTACT_TRIGGER__') {
-        appendChatMessage(`Here are Dinesh's contact details:\n${CONTACT_DETAILS}`, 'bot');
+        appendChatMessage(`Here are Dinesh's contact details:\n${getContactDetailsText()}`, 'bot');
         setTimeout(() => {
           emailFlow = 'ASK_CONFIRM';
-          showEmailPrompt('Would you like to send an email to Dinesh right now?', 'Type yes or no...');
+          appendChatMessage('Would you like to draft an email here, or continue chatting?', 'bot');
+          showEmailDecisionSuggestions();
         }, 600);
       } else {
         appendChatMessage(response, 'bot');
@@ -718,7 +899,7 @@ Portfolio facts:
     stopAutoRotate();
     stopTypingIndicator();
     if (chatSuggestionsPanel) {
-      hideSuggestionPanel();
+      hideSuggestionPanel(true);
     }
     updateTogglePromptText();
     window.setTimeout(() => {
@@ -733,13 +914,13 @@ Portfolio facts:
   }
 
   const chatToggleMessages = [
-    'Hey, I’m LEO!',
-    'I’m here to help—ask me anything.',
-    'Need a quick answer? Tap me.',
-    'I’m LEO, your portfolio assistant.',
-    'Let’s talk about projects or skills!',
-    'Hi there! I’m LEO, ready to help.',
-    'Curious? I can answer your questions.'
+    'Contact Dinesh in one tap.',
+    'Let me help you reach Dinesh.',
+    'Ask me about projects, skills, or contact details.',
+    'Need Dinesh\'s email? I can help.',
+    'Want to call or mail Dinesh? Tap here.',
+    'I\'m LEO. Let me guide you.',
+    'Reach DK faster with the chat assistant.'
   ];
 
   let togglePromptInterval = null;
@@ -823,6 +1004,7 @@ Portfolio facts:
     chatInput.addEventListener('click', updateSuggestions);
     chatInput.addEventListener('blur', () => {
       suggestionHideTimeout = window.setTimeout(() => {
+        if (stickySuggestions) return;
         renderSuggestions([]);
         clearSuggestionCountdown();
       }, 120);
