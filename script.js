@@ -1130,6 +1130,10 @@ Portfolio facts:
     if (/\b(contact|email|phone|reach|contact details)\b/i.test(input)) {
       return '__CONTACT_TRIGGER__';
     }
+    // Handle visitor-count queries locally so LEO can reply with the latest stored counts.
+    if (/\b(visitor|visitor count|visitors|site visits|page views|visit count)\b/i.test(input)) {
+      return '__VISITOR_REMOTE__';
+    }
     try {
       const res = await fetch(LEO_WORKER_URL, {
         method: 'POST',
