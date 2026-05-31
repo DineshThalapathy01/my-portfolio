@@ -1061,6 +1061,10 @@ figure {
 }
 
 /* Styles for visitor table rendered inside chat */
+.chat-html-content {
+    white-space: normal;
+}
+
 .chat-html-content .visitor-summary-html {
     width: 100%;
 }
@@ -1070,7 +1074,7 @@ figure {
     max-height: 220px;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0.25rem 0.4rem 0.4rem;
+    padding: 0.25rem 0.4rem 0;
 }
 
 .chat-html-content .visitor-table {
