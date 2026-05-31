@@ -388,7 +388,7 @@
       <div class="chat-widget-header" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <span class="chat-welcome">LEO</span>
-          <p class="chat-subtitle">Portfolio AI assistant</p>
+          <p class="chat-subtitle">Portfolio Real Time AI assistant</p>
         </div>
         <button id="chatCloseBtn" type="button" aria-label="Close chat" title="Close chat" style="background: none; border: none; cursor: pointer; font-size: 24px; padding: 0;">×</button>
       </div>
