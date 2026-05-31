@@ -1244,10 +1244,17 @@ Portfolio facts:
   // --- Local Knowledge Base (loaded from assets/portfolio_kb.json) ---
   let KB_DATA = null;
 
+  const resolveKBUrl = () => {
+    const scriptTag = document.querySelector('script[src$="script.js"]');
+    const scriptUrl = scriptTag ? new URL(scriptTag.src, window.location.href).href : window.location.href;
+    const baseUrl = scriptUrl.slice(0, scriptUrl.lastIndexOf('/') + 1);
+    return new URL('assets/portfolio_kb.json', baseUrl).href;
+  };
+
   const ensureKBLoaded = async () => {
     if (KB_DATA) return KB_DATA;
     try {
-      const res = await fetch('/assets/portfolio_kb.json', { cache: 'no-store' });
+      const res = await fetch(resolveKBUrl(), { cache: 'no-store' });
       if (!res.ok) throw new Error('KB fetch failed');
       KB_DATA = await res.json();
       return KB_DATA;
