@@ -1121,13 +1121,44 @@
     if (/\b(contact|email|phone|reach you|contact details)\b/.test(lower)) {
       return '__CONTACT_TRIGGER__';
     }
-    // If worker is unavailable and query appears portfolio-related, indicate missing info politely
+    // Try a local lookup from known portfolio facts when worker is unavailable
+    const localLookup = (q) => {
+      if (/\b(smart travellers|smart traveller|smart-travellers|smart travellers app)\b/.test(q)) {
+        return 'Smart Travellers is a Flutter mobile application for travel guidance and route planning listed in Dinesh\'s portfolio.';
+      }
+      if (/\b(bbo\s*cw|bbocw)\b/.test(q)) {
+        return 'BBOCW is the Bihar welfare portal built with Angular, Spring Boot, PostgreSQL, and Aadhaar integration.';
+      }
+      if (/\b(tncsc)\b/.test(q)) {
+        return 'TNCSC is an enterprise access control system with role-based permissions and GCP-hosted infrastructure.';
+      }
+      if (/(skill|skills|technology|technologies|stack|tools|languages)/.test(q)) {
+        return 'Skills: Java, Spring Boot, Angular, PostgreSQL, Oracle, MySQL, JWT, Spring Security, REST API, Microservices, Flutter, Git, GitHub, GCP.';
+      }
+      if (/(current company|current work|works at|working at|employed at|employer|company)/.test(q)) {
+        return 'Current Company: Eagle Software India Pvt Ltd.';
+      }
+      if (/(location|located|where|based|office|city)/.test(q)) {
+        return `Location: ${CONTACT_INFO.location}`;
+      }
+      if (/(experience|years|experience in)/.test(q)) {
+        return 'Experience: 3+ Years in full-stack development.';
+      }
+      if (/(contact details|how can i contact|how to contact|contact email)/.test(q)) {
+        return getContactDetailsText();
+      }
+      return '';
+    };
+
     if (PORTFOLIO_QUERY_PATTERN.test(lower) || TECHNOLOGY_PATTERN.test(lower)) {
+      const found = localLookup(lower);
+      if (found) return found;
       return MISSING_INFO_REPLY;
     }
     // Otherwise block and point to portfolio scope
     return BLOCKED_PORTFOLIO_REPLY;
   };
+
 
   // ── Real-time AI via Cloudflare Worker proxy (key never in repo) ──────────
   const LEO_WORKER_URL = 'https://leo-proxy.dineshthalapathy62.workers.dev';
@@ -1203,7 +1234,7 @@ Portfolio facts:
   };
 
   const getResponse = async (input) => {
-    if (/\b(contact|email|phone|reach|contact details)\b/i.test(input)) {
+    if (/\b(contact|email|phone|reach|contact details|location|located|where|based|office|city|current company|works at|working at)\b/i.test(input)) {
       return '__CONTACT_TRIGGER__';
     }
     if (/\b(visitor|visitor count|visitors|site visits|page views|visit count)\b/i.test(input)) {
