@@ -72,6 +72,7 @@ export default {
 
     const message = typeof body.message === 'string' ? body.message.trim() : '';
     const providedContext = typeof body.context === 'string' ? body.context.trim() : '';
+    const queryType = typeof body.query_type === 'string' && body.query_type.trim() ? body.query_type.trim() : 'general';
     if (!message) {
       return json({ error: 'No message provided' }, 400, corsHeaders(ALLOWED_ORIGIN));
     }
@@ -82,8 +83,8 @@ export default {
 
     // If the client provided matched KB context, include it in the system instructions
     const effectiveSystemPrompt = providedContext
-      ? SYSTEM_PROMPT + `\n\nContext (from portfolio KB):\n${providedContext}\n\nInstruction: Answer ONLY using the information in the Context above. If the information required to answer is not contained in the Context, reply exactly: "${MISSING_INFO_REPLY}"` 
-      : SYSTEM_PROMPT;
+      ? SYSTEM_PROMPT + `\n\nContext (from portfolio KB):\n${providedContext}\n\nQueryType: ${queryType}.\nInstruction: Answer ONLY using the information in the Context above. If the information required to answer is not contained in the Context, reply exactly: "${MISSING_INFO_REPLY}"` 
+      : SYSTEM_PROMPT + `\n\nQueryType: ${queryType}.`;
 
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`,
