@@ -149,7 +149,7 @@
     if (footer) {
       footer.innerHTML = `Designed & Maintained by S Dinesh Kumar. Last updated: May 28, 2026.` +
         ` <div class="footer-visitor-summary">` +
-        `  <span class="footer-badge footer-badge-today">Today: ${todayCount}</span>` +
+        `  <span class="footer-badge footer-badge-today">Visitors count - Today: ${todayCount}</span>` +
         `  <span class="footer-badge footer-badge-total">Total: ${total}</span>` +
         `</div>`;
     }
@@ -947,10 +947,10 @@
       { phrase: 'How did you start in full stack development?', reply: `${name} started with Angular frontend fundamentals and expanded to backend services with Spring Boot and database design.` },
       { phrase: 'What is the TNCSC project about?', reply: `TNCSC is an enterprise access control system ${name} developed with role-based permissions, workflow modules, and GCP-hosted infrastructure.` },
       { phrase: 'What skills do you have in Java and Angular?', reply: `${name} uses Spring Boot for APIs in Java; in Angular builds responsive interfaces, state management, and component architecture.` },
-      { phrase: 'What is your experience with government systems?', reply: `${name} has 2+ years building government systems like Bihar BBOCW portal and Tamil Nadu TNCSC with enterprise-level requirements.` },
+      { phrase: 'What is your experience with government systems?', reply: `${name} has 3+ years building government systems like Bihar BBOCW portal and Tamil Nadu TNCSC with enterprise-level requirements.` },
       { phrase: 'How can I contact you?', reply: `You can find ${name}'s contact details on the portfolio homepage under the contact section with email and messaging options.` },
       { phrase: 'What are your contact details?', reply: `You can contact ${name} through the portfolio contact section, where email and messaging options are listed.` },
-      { phrase: 'Tell me your resume', reply: `${name} is a Full Stack Developer with 2+ years experience building Angular, Spring Boot, PostgreSQL, REST APIs, Flutter, and government/enterprise systems from Chennai.` },
+      { phrase: 'Tell me your resume', reply: `${name} is a Full Stack Developer with 3+ years experience building Angular, Spring Boot, PostgreSQL, REST APIs, Flutter, and government/enterprise systems from Chennai.` },
       { phrase: 'Tell me about your biography', reply: `${name} is a Full Stack Developer focused on enterprise portals, citizen services, mobile travel apps, chatbots, and regression automation since April 2023.` },
       { phrase: 'Where have you worked?', reply: `${name} has worked on government welfare and access systems like BBOCW and TNCSC, plus apps like Smart Travellers, a chatbot, and regression tooling.` },
       { phrase: 'What is your work history?', reply: `${name}'s work history spans full-stack development of web and mobile solutions since April 2023, with strong experience in Angular, Java Spring Boot, and PostgreSQL.` }
@@ -1006,7 +1006,7 @@
       const todayCount = Array.isArray(stats.dailyVisitorIds[todayKey]) ? stats.dailyVisitorIds[todayKey].length : 0;
       const requestedCount = Array.isArray(stats.dailyVisitorIds[queryKey]) ? stats.dailyVisitorIds[queryKey].length : 0;
       const total = Array.isArray(stats.globalVisitorIds) ? stats.globalVisitorIds.length : 0;
-      return `Visitor count for ${label} is ${requestedCount}. Total unique visitors: ${total}.`;
+      return `Visitors count - Today: ${todayCount}, Total: ${total}.`;
     }
     if (/\b(contact|email|phone|reach you|contact details)\b/.test(lower)) {
       return `__CONTACT_TRIGGER__`;
