@@ -1107,91 +1107,26 @@
   // ─────────────────────────────────────────────────────────────────────────
 
   const localResponses = (input) => {
-    const name = 'S Dinesh Kumar';
-    const lower = input.toLowerCase();
-
-    // Exact phrase matching for better relevance
-    const exactMatches = [
-      { phrase: 'Tell me about the BBOCW project', reply: `BBOCW is the Bihar welfare portal ${name} built with Angular 16, Spring Boot, PostgreSQL, and Aadhaar integration for secure citizen access.` },
-      { phrase: 'What technologies do you use?', reply: `${name} specializes in Angular, Java Spring Boot, PostgreSQL, REST APIs, Flutter, and modern full-stack development.` },
-      { phrase: 'How did you build the chatbot?', reply: `${name} built the chatbot using Java backend with file handling, content moderation, and quick response processing capabilities.` },
-      { phrase: 'Where is your office located?', reply: `${name} works from Chennai, delivering solutions remotely for state government systems and Bihar projects.` },
-      { phrase: 'Tell me about the Smart Travellers app', reply: `Smart Travellers is a Flutter app ${name} created for public transport guidance and route planning with real-time navigation support.` },
-      { phrase: 'How did you start in full stack development?', reply: `${name} started with Angular frontend fundamentals and expanded to backend services with Spring Boot and database design.` },
-      { phrase: 'What is the TNCSC project about?', reply: `TNCSC is an enterprise access control system ${name} developed with role-based permissions, workflow modules, and GCP-hosted infrastructure.` },
-      { phrase: 'What skills do you have in Java and Angular?', reply: `${name} uses Spring Boot for APIs in Java; in Angular builds responsive interfaces, state management, and component architecture.` },
-      { phrase: 'What is your experience with government systems?', reply: `${name} has 3+ years building government systems like Bihar BBOCW portal and Tamil Nadu TNCSC with enterprise-level requirements.` },
-      { phrase: 'How can I contact you?', reply: `You can find ${name}'s contact details on the portfolio homepage under the contact section with email and messaging options.` },
-      { phrase: 'What are your contact details?', reply: `You can contact ${name} through the portfolio contact section, where email and messaging options are listed.` },
-      { phrase: 'Tell me your resume', reply: `${name} is a Full Stack Developer with 3+ years experience building Angular, Spring Boot, PostgreSQL, REST APIs, Flutter, and government/enterprise systems from Chennai.` },
-      { phrase: 'Tell me about your biography', reply: `${name} is a Full Stack Developer focused on enterprise portals, citizen services, mobile travel apps, chatbots, and regression automation since April 2023.` },
-      { phrase: 'Where have you worked?', reply: `${name} has worked on government welfare and access systems like BBOCW and TNCSC, plus apps like Smart Travellers, a chatbot, and regression tooling.` },
-      { phrase: 'What is your work history?', reply: `${name}'s work history spans full-stack development of web and mobile solutions since April 2023, with strong experience in Angular, Java Spring Boot, and PostgreSQL.` }
-    ];
-
-    // Check for exact phrase matches first
-    for (const match of exactMatches) {
-      if (lower.includes(match.phrase.toLowerCase())) {
-        return match.reply;
-      }
+    // Minimal local fallback: preserve greeting, contact/email trigger, and visitor token.
+    const lower = (input || '').toLowerCase();
+    // Greeting
+    if (/\b(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(lower)) {
+      return `Hello! S Dinesh Kumar has LEO as assistant. What would you like to know?`;
     }
-
-    // Keyword-based matching for general queries
-    const projectMap = [
-      { keys: ['bbocw', 'bihar', 'welfare', 'portal'], reply: `BBOCW is the Bihar welfare portal with Angular 16, Spring Boot, PostgreSQL, and Aadhaar integration ${name} created.` },
-      { keys: ['tncsc', 'tamil', 'civil', 'supplies', 'access'], reply: `TNCSC is an enterprise access control system ${name} developed with role-based permissions and GCP-hosted services.` },
-      { keys: ['chatbot', 'url', 'shortening', 'file'], reply: `${name}'s chatbot handles file processing, content moderation, and quick responses with a Java backend.` },
-      { keys: ['regression', 'testing', 'excel', 'automate'], reply: `${name} created the regression testing tool that automates workflows, scheduled processing, and Excel export functionality.` },
-      { keys: ['smart', 'travellers', 'transport', 'flutter', 'app'], reply: `Smart Travellers is a Flutter travel app ${name} built for public transport guidance and route planning.` },
-    ];
-
-    for (const item of projectMap) {
-      if (item.keys.some((key) => lower.includes(key))) {
-        return item.reply;
-      }
-    }
-
-    if (/\b(hi|hello|hey|good morning|good evening)\b/.test(lower)) {
-      return `Hello! ${name} has LEO as assistant. What would you like to know?`;
-    }
-    if (/\b(name|who are you|who is leo)\b/.test(lower)) {
-      return `LEO is an AI assistant for ${name}'s full-stack development portfolio.`;
-    }
-    if (/\b(boss|owner|creator|who made|who created|who built)\b/.test(lower)) {
-      return `${name} is a Full Stack Developer with 2+ years of experience in government systems.`;
-    }
-    if (/\b(profile|about|background)\b/.test(lower)) {
-      return `${name} is a Full Stack Developer specializing in Angular, Spring Boot, and enterprise systems.`;
-    }
+    // Visitor count -> special token handled elsewhere
     if (/\b(visitor|visitor count|visitors|site visits|page views|visit count)\b/.test(lower)) {
-      // handle visitor queries via remote counts asynchronously
       return '__VISITOR_REMOTE__';
     }
+    // Contact/email flow -> trigger the contact flow
     if (/\b(contact|email|phone|reach you|contact details)\b/.test(lower)) {
-      return `__CONTACT_TRIGGER__`;
+      return '__CONTACT_TRIGGER__';
     }
-    if (/\b(resume|cv|bio|biography|career|employment|work history)\b/.test(lower)) {
-      return `${name} is a Full Stack Developer with 2+ years of experience in Angular, Java Spring Boot, PostgreSQL, REST APIs, Flutter, and government systems. Key projects include BBOCW, TNCSC, Smart Travellers, chatbot, and regression automation.`;
+    // If worker is unavailable and query appears portfolio-related, indicate missing info politely
+    if (PORTFOLIO_QUERY_PATTERN.test(lower) || TECHNOLOGY_PATTERN.test(lower)) {
+      return MISSING_INFO_REPLY;
     }
-    if (/\b(project (spec|details|specification|specs)|project information)\b/.test(lower)) {
-      return `Project specs cover BBOCW with Angular and Spring Boot, TNCSC with access control and GCP hosting, Smart Travellers with Flutter, plus chatbot and regression tools for government/enterprise workflows.`;
-    }
-    if (/\b(skill|tech|technology|stack|tools|languages)\b/.test(lower)) {
-      return `${name} is expert in Angular, Java Spring Boot, PostgreSQL, REST APIs, Flutter, and modern development patterns.`;
-    }
-    if (/\b(currently|working|project|ongoing)\b/.test(lower)) {
-      return `${name} is currently focused on modern Angular solutions and Spring Boot microservices from Chennai office.`;
-    }
-    if (/\b(location|city|office|based|work)\b/.test(lower)) {
-      return `${name} is based in Chennai with remote delivery for government and enterprise applications.`;
-    }
-    if (/\b(thank|thanks|appreciate)\b/.test(lower)) {
-      return "Thank you! Feel free to ask more about projects or skills.";
-    }
-    if (/\b(how are you|doing|how is it)\b/.test(lower)) {
-      return `Ready to help! Ask about ${name}'s projects, skills, or experience.`;
-    }
-    return `Ask about ${name}'s projects (BBOCW, TNCSC, Chatbot, Regression, Smart Travellers), skills, or experience.`;
+    // Otherwise block and point to portfolio scope
+    return BLOCKED_PORTFOLIO_REPLY;
   };
 
   // ── Real-time AI via Cloudflare Worker proxy (key never in repo) ──────────
