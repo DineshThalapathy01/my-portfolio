@@ -1675,4 +1675,201 @@ Portfolio facts:
       }
     });
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FEEDBACK FORM HANDLING
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const FEEDBACK_WORKER_URL = 'https://portfolio-feedback.dineshthalapathy62.workers.dev/feedback';
+
+  const feedbackForm = document.getElementById('feedbackForm');
+  if (feedbackForm) {
+    const nameInput = document.getElementById('feedbackName');
+    const emailInput = document.getElementById('feedbackEmail');
+    const subjectInput = document.getElementById('feedbackSubject');
+    const messageInput = document.getElementById('feedbackMessage');
+    const submitBtn = document.getElementById('submitFeedbackBtn');
+    const statusDiv = document.getElementById('feedbackStatus');
+
+    const validateFeedbackForm = () => {
+      let isValid = true;
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const subject = subjectInput.value.trim();
+      const message = messageInput.value.trim();
+
+      // Name validation
+      if (name.length < 3 || name.length > 100) {
+        document.getElementById('nameError').textContent = 'Name must be 3-100 characters';
+        isValid = false;
+      } else {
+        document.getElementById('nameError').textContent = '';
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        document.getElementById('emailError').textContent = 'Please enter a valid email address';
+        isValid = false;
+      } else {
+        document.getElementById('emailError').textContent = '';
+      }
+
+      // Subject validation
+      if (subject.length === 0 || subject.length > 150) {
+        document.getElementById('subjectError').textContent = 'Subject must be 1-150 characters';
+        isValid = false;
+      } else {
+        document.getElementById('subjectError').textContent = '';
+      }
+
+      // Message validation
+      if (message.length < 10 || message.length > 1000) {
+        document.getElementById('messageError').textContent = 'Message must be 10-1000 characters';
+        isValid = false;
+      } else {
+        document.getElementById('messageError').textContent = '';
+      }
+
+      submitBtn.disabled = !isValid;
+      return isValid;
+    };
+
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    nameInput.addEventListener('input', validateFeedbackForm);
+    emailInput.addEventListener('input', validateFeedbackForm);
+    subjectInput.addEventListener('input', validateFeedbackForm);
+    messageInput.addEventListener('input', validateFeedbackForm);
+
+    feedbackForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validateFeedbackForm()) return;
+
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const subject = subjectInput.value.trim();
+      const message = messageInput.value.trim();
+
+      submitBtn.disabled = true;
+      document.getElementById('submitText').style.display = 'none';
+      document.getElementById('submitSpinner').style.display = 'inline';
+      statusDiv.style.display = 'none';
+
+      try {
+        const response = await fetch(FEEDBACK_WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: escapeHtml(name),
+            email: escapeHtml(email),
+            subject: escapeHtml(subject),
+            message: escapeHtml(message),
+          }),
+        });
+
+        document.getElementById('submitText').style.display = 'inline';
+        document.getElementById('submitSpinner').style.display = 'none';
+
+        if (response.ok) {
+          statusDiv.className = 'status-message success visible';
+          statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Thank you for your feedback. Your message has been submitted successfully.';
+          statusDiv.style.display = 'block';
+          feedbackForm.reset();
+          submitBtn.disabled = true;
+          setTimeout(() => {
+            statusDiv.style.display = 'none';
+          }, 5000);
+        } else {
+          throw new Error('Server error');
+        }
+      } catch (err) {
+        console.error('Feedback submission failed:', err);
+        statusDiv.className = 'status-message error visible';
+        statusDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Unable to submit feedback right now. Please try again later.';
+        statusDiv.style.display = 'block';
+        document.getElementById('submitText').style.display = 'inline';
+        document.getElementById('submitSpinner').style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    });
+
+    validateFeedbackForm();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // LEO FEEDBACK & RESUME HANDLING
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const handleLEOFeedback = (input) => {
+    const lower = input.toLowerCase();
+    if (/\b(feedback|send feedback|submit feedback|leave feedback|suggest|suggestion)\b/.test(lower)) {
+      return '__FEEDBACK_TRIGGER__';
+    }
+    if (/\b(resume|download resume|cv|curriculum vitae|your resume|download cv)\b/.test(lower)) {
+      return '__RESUME_DOWNLOAD__';
+    }
+    return null;
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Update handleUserInput to include LEO feedback/resume handling
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const originalHandleUserInput = handleUserInput;
+  const enhancedHandleUserInput = async (text) => {
+    if (!text) return;
+
+    const feedbackTrigger = handleLEOFeedback(text);
+    if (feedbackTrigger === '__FEEDBACK_TRIGGER__') {
+      appendChatMessage(text, 'user');
+      chatInput.value = '';
+      if (chatSuggestions) renderSuggestions([]);
+      appendChatMessage("I'd love to hear your feedback! You can submit detailed feedback through the Feedback page in the navigation menu, or you can share your thoughts directly here in the chat.", 'bot');
+      const feedbackLink = { label: 'Go to Feedback Page', value: 'feedback-page', className: 'suggestion-item-action' };
+      renderSuggestions([feedbackLink], {
+        sticky: true,
+        variant: 'actions',
+        onSelect: (value) => {
+          if (value === 'feedback-page') {
+            window.location.href = isTemplatesPage ? 'feedback.html' : 'templates/feedback.html';
+          }
+        },
+      });
+      return;
+    }
+    if (feedbackTrigger === '__RESUME_DOWNLOAD__') {
+      appendChatMessage(text, 'user');
+      chatInput.value = '';
+      if (chatSuggestions) renderSuggestions([]);
+      appendChatMessage("You can download my resume using the Resume button in the header navigation, or click the button below.", 'bot');
+      const resumeLink = { label: '⬇️ Download Resume', value: 'resume-download', className: 'suggestion-item-action' };
+      renderSuggestions([resumeLink], {
+        sticky: true,
+        variant: 'actions',
+        onSelect: (value) => {
+          if (value === 'resume-download') {
+            const resumeUrl = isTemplatesPage ? '../S Dinesh Kumar.pdf' : 'S Dinesh Kumar.pdf';
+            const link = document.createElement('a');
+            link.href = resumeUrl;
+            link.download = 'S_Dinesh_Kumar_Resume.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        },
+      });
+      return;
+    }
+
+    return originalHandleUserInput.call(this, text);
+  };
+
+  // Replace handleUserInput with the enhanced version
+  window.handleUserInput = enhancedHandleUserInput;
 });
+

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback — S Dinesh Kumar</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body class="app-shell">
+    <header class="app-header">
+        <div class="brand">
+            <span class="brand-tag">S Dinesh Kumar</span>
+            <h1 class="brand-title">Feedback</h1>
+        </div>
+        <button id="navToggle" class="nav-toggle" aria-label="Toggle menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <nav class="app-nav" id="appNav">
+            <a href="../index.html">Home</a>
+            <a href="projects.html">Projects</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+            <a href="feedback.html" class="active">Feedback</a>
+            <a href="../S Dinesh Kumar.pdf" download="S_Dinesh_Kumar_Resume.pdf" class="nav-resume-link">
+                <i class="fas fa-download"></i> Resume
+            </a>
+        </nav>
+    </header>
+
+    <main class="page-main feedback-page">
+        <section class="section-card feedback-panel">
+            <span class="eyebrow">Get in touch</span>
+            <h2>Share Your Feedback</h2>
+            <p>I value your thoughts and suggestions. Please share your feedback about my portfolio, projects, or anything else you'd like to discuss.</p>
+
+            <form id="feedbackForm" class="feedback-form">
+                <div class="form-group">
+                    <label for="feedbackName">Name <span class="required">*</span></label>
+                    <input type="text" id="feedbackName" name="name" placeholder="Your name" required>
+                    <span class="error-message" id="nameError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="feedbackEmail">Email <span class="required">*</span></label>
+                    <input type="email" id="feedbackEmail" name="email" placeholder="Your email" required>
+                    <span class="error-message" id="emailError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="feedbackSubject">Subject <span class="required">*</span></label>
+                    <input type="text" id="feedbackSubject" name="subject" placeholder="Feedback subject" required>
+                    <span class="error-message" id="subjectError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="feedbackMessage">Message <span class="required">*</span></label>
+                    <textarea id="feedbackMessage" name="message" placeholder="Your message (min 10 chars)" rows="6" required></textarea>
+                    <span class="error-message" id="messageError"></span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="submitFeedbackBtn" class="btn btn-primary" disabled>
+                        <span id="submitText">Submit Feedback</span>
+                        <span id="submitSpinner" class="spinner" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </button>
+                </div>
+
+                <div id="feedbackStatus" class="feedback-status" style="display: none;"></div>
+            </form>
+        </section>
+    </main>
+
+    <footer class="app-footer">Designed & Maintained by S Dinesh Kumar. Last updated: May 31, 2026.</footer>
+    <script src="../script.js"></script>
+</body>
+
+</html>
