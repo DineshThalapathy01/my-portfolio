@@ -68,6 +68,27 @@
   const VISITOR_STATS_KEY = 'portfolioVisitorStats';
   const VISITOR_ID_KEY = 'portfolioVisitorId';
   const getDateKey = (date) => date.toISOString().slice(0, 10);
+
+  async function generateFingerprint() {
+    const raw = [
+      navigator.userAgent,
+      navigator.language,
+      navigator.platform,
+      screen.width,
+      screen.height,
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+      navigator.hardwareConcurrency
+    ].join("|");
+
+    const msgUint8 = new TextEncoder().encode(raw);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+    return hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
   const formatDateKey = (key) => {
     const date = new Date(key);
     return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
@@ -143,101 +164,72 @@
     };
   };
 
-  const updateFooterVisitorStats = () => {
-    const { total, todayCount } = getVisitorSummary();
-    const footer = document.querySelector('.app-footer');
-    if (footer) {
-      footer.innerHTML = `Designed & Maintained by S Dinesh Kumar. Last updated: May 28, 2026.` +
-        ` <div class="footer-visitor-summary">` +
-        `  <span class="footer-badge footer-badge-today">Visitors count - Today: ${todayCount}</span>` +
-        `  <span class="footer-badge footer-badge-total">Total: ${total}</span>` +
-        `</div>`;
-    }
-  };
-
-  // Debug panel for visitor stats (temporary - helps cross-device testing)
-  const createVisitorDebugPanel = () => {
-    if (document.getElementById('visitorDebugPanel')) return;
-    const panel = document.createElement('div');
-    panel.id = 'visitorDebugPanel';
-    panel.style.cssText = 'position:fixed;left:8px;bottom:80px;background:rgba(0,0,0,0.75);color:#fff;padding:8px 10px;font-size:12px;z-index:99999;max-width:320px;border-radius:6px;backdrop-filter:blur(4px);';
-    panel.innerHTML = `<div style="font-weight:600;margin-bottom:6px">Visitor Debug</div>
-      <div id="dbgVisitorId" style="word-break:break-all;margin-bottom:6px">ID: </div>
-      <div id="dbgStats" style="margin-bottom:6px">Stats: </div>
-      <div style="display:flex;gap:6px;margin-bottom:6px"><button id="dbgRefresh" type="button">Refresh</button><button id="dbgExport" type="button">Export</button><button id="dbgCopy" type="button">Copy</button></div>
-      <div style="margin-bottom:6px"><textarea id="dbgImportArea" placeholder="Paste visitor-stats JSON here to import/merge" style="width:100%;height:80px;font-size:12px;padding:6px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#fff"></textarea></div>
-      <div style="display:flex;gap:6px;margin-bottom:6px"><button id="dbgImport" type="button">Import & Merge</button><button id="dbgClear" type="button">Clear Local</button></div>
-      <div style="margin-top:6px;font-size:11px;color:#ddd">Temporary debug panel — safe to remove later.</div>`;
-    document.body.appendChild(panel);
-    const idEl = document.getElementById('dbgVisitorId');
-    const statsEl = document.getElementById('dbgStats');
-    const refresh = () => {
-      const id = localStorage.getItem(VISITOR_ID_KEY) || '(none)';
-      const statsRaw = localStorage.getItem(VISITOR_STATS_KEY) || '{}';
-      let parsed = {};
-      try { parsed = JSON.parse(statsRaw); } catch (e) { parsed = {}; }
-      const summary = getVisitorSummary();
-      idEl.textContent = `ID: ${id}`;
-      statsEl.textContent = `Today: ${summary.todayCount}, Total: ${summary.total}`;
+  const updateFooterVisitorStats = async () => {
+    const local = getVisitorSummary();
+    let counts = {
+      total: local.total,
+      today: local.todayCount,
     };
-    panel.querySelector('#dbgRefresh').addEventListener('click', refresh);
-    panel.querySelector('#dbgExport').addEventListener('click', () => {
-      const data = localStorage.getItem(VISITOR_STATS_KEY) || '{}';
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'visitor-stats.json';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
-    panel.querySelector('#dbgCopy').addEventListener('click', () => {
-      const data = localStorage.getItem(VISITOR_STATS_KEY) || '{}';
-      navigator.clipboard.writeText(data).then(() => {
-        try { window.alert('Visitor stats copied to clipboard'); } catch (e) {}
-      }, () => { try { window.alert('Copy failed'); } catch (e) {} });
-    });
-    panel.querySelector('#dbgImport').addEventListener('click', () => {
-      const txt = panel.querySelector('#dbgImportArea').value.trim();
-      if (!txt) { try { window.alert('Paste visitor-stats JSON to import'); } catch (e) {} return; }
-      try {
-        const incoming = JSON.parse(txt);
-        mergeVisitorStats(incoming);
-        refresh();
-        try { window.alert('Imported and merged successfully'); } catch (e) {}
-      } catch (err) {
-        try { window.alert('Invalid JSON'); } catch (e) {}
+    try {
+      const remote = await getRemoteCounts();
+      if (typeof remote.total === 'number') {
+        counts.total = remote.total;
       }
-    });
-    panel.querySelector('#dbgClear').addEventListener('click', () => {
-      if (!confirm('Clear local visitor stats? This cannot be undone for this browser.')) return;
-      localStorage.removeItem(VISITOR_STATS_KEY);
-      localStorage.removeItem(VISITOR_ID_KEY);
-      incrementVisitorStats();
-      updateFooterVisitorStats();
-      refresh();
-    });
-    refresh();
+      if (typeof remote.today === 'number') {
+        counts.today = remote.today;
+      }
+    } catch {
+      // keep local fallback counts if remote is unavailable
+    }
+
+    const footer = document.querySelector('.app-footer');
+    if (!footer) return;
+
+    footer.innerHTML =
+      `Designed & Maintained by S Dinesh Kumar. Last updated: May 28, 2026.` +
+      `<div class="footer-visitor-summary">` +
+      `<span class="footer-badge footer-badge-today">Visitors Today: ${counts.today}</span>` +
+      `<span class="footer-badge footer-badge-total">Total Visitors: ${counts.total}</span>` +
+      `</div>`;
   };
 
-  // Merge incoming stats object into local storage stats (union unique ids)
-  const mergeVisitorStats = (incoming) => {
-    if (!incoming || typeof incoming !== 'object') return;
-    const current = getVisitorStats();
-    const merged = { globalVisitorIds: Array.from(new Set(current.globalVisitorIds)), dailyVisitorIds: { ...current.dailyVisitorIds } };
-    if (Array.isArray(incoming.globalVisitorIds)) {
-      incoming.globalVisitorIds.forEach((id) => { if (!merged.globalVisitorIds.includes(id)) merged.globalVisitorIds.push(id); });
-    }
-    if (incoming.dailyVisitorIds && typeof incoming.dailyVisitorIds === 'object') {
-      Object.keys(incoming.dailyVisitorIds).forEach((day) => {
-        const arr = Array.isArray(incoming.dailyVisitorIds[day]) ? incoming.dailyVisitorIds[day] : [];
-        if (!Array.isArray(merged.dailyVisitorIds[day])) merged.dailyVisitorIds[day] = [];
-        arr.forEach((id) => { if (!merged.dailyVisitorIds[day].includes(id)) merged.dailyVisitorIds[day].push(id); });
+  // Cloudflare Worker Visitor Counter
+  const WORKER_URL =
+    "https://portfolio-visitor-counter.dineshthalapathy62.workers.dev";
+
+  async function incrementRemoteCountsIfNeeded() {
+    try {
+      const fingerprint = await generateFingerprint();
+      await fetch(WORKER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ fingerprint })
       });
+    } catch (e) {
+      console.error(e);
     }
-    saveVisitorStats(merged);
-    updateFooterVisitorStats();
+  };
+
+  const getRemoteCounts = async () => {
+
+    try {
+
+      const response =
+        await fetch(
+          `${WORKER_URL}/stats`
+        );
+
+      return await response.json();
+
+    } catch (e) {
+
+      return {
+        total: 0,
+        today: 0
+      };
+    }
   };
 
   const calculateExperience = () => {
@@ -277,9 +269,17 @@
     }
   };
 
+
   calculateExperience();
   incrementVisitorStats();
-  updateFooterVisitorStats();
+
+  (async () => {
+
+    await incrementRemoteCountsIfNeeded();
+
+    await updateFooterVisitorStats();
+
+  })();
 
   // Make project cards navigate when clicked (except when inner links are clicked)
   document.querySelectorAll('.project-card').forEach((card) => {
@@ -604,11 +604,11 @@
   const getSuggestions = (query) => {
     const lower = query.toLowerCase();
     let filtered = suggestionPool.filter((item) => !query || item.toLowerCase().includes(lower));
-    
+
     if (!query && filtered.length > 0) {
       filtered.sort(() => Math.random() - 0.5);
     }
-    
+
     return filtered.slice(0, 1);
   };
 
@@ -1021,7 +1021,7 @@
   const localResponses = (input) => {
     const name = 'S Dinesh Kumar';
     const lower = input.toLowerCase();
-    
+
     // Exact phrase matching for better relevance
     const exactMatches = [
       { phrase: 'Tell me about the BBOCW project', reply: `BBOCW is the Bihar welfare portal ${name} built with Angular 16, Spring Boot, PostgreSQL, and Aadhaar integration for secure citizen access.` },
@@ -1076,22 +1076,8 @@
       return `${name} is a Full Stack Developer specializing in Angular, Spring Boot, and enterprise systems.`;
     }
     if (/\b(visitor|visitor count|visitors|site visits|page views|visit count)\b/.test(lower)) {
-      const dateMatch = lower.match(/\b(\d{4}-\d{2}-\d{2})\b/);
-      const todayKey = getDateKey(new Date());
-      const yesterdayKey = getDateKey(new Date(Date.now() - 86400000));
-      let queryKey = dateMatch ? dateMatch[1] : todayKey;
-      let label = 'today';
-      if (dateMatch) {
-        label = formatDateKey(queryKey);
-      } else if (/\byesterday\b/.test(lower)) {
-        queryKey = yesterdayKey;
-        label = 'yesterday';
-      }
-      const stats = getVisitorStats();
-      const todayCount = Array.isArray(stats.dailyVisitorIds[todayKey]) ? stats.dailyVisitorIds[todayKey].length : 0;
-      const requestedCount = Array.isArray(stats.dailyVisitorIds[queryKey]) ? stats.dailyVisitorIds[queryKey].length : 0;
-      const total = Array.isArray(stats.globalVisitorIds) ? stats.globalVisitorIds.length : 0;
-      return `Visitors count - Today: ${todayCount}, Total: ${total}.`;
+      // handle visitor queries via remote counts asynchronously
+      return '__VISITOR_REMOTE__';
     }
     if (/\b(contact|email|phone|reach you|contact details)\b/.test(lower)) {
       return `__CONTACT_TRIGGER__`;
@@ -1221,6 +1207,17 @@ Portfolio facts:
           appendChatMessage('Would you like to draft an email here, or continue chatting?', 'bot');
           showEmailDecisionSuggestions();
         }, 600);
+      } else if (response === '__VISITOR_REMOTE__') {
+        // fetch remote counts and reply
+        getRemoteCounts().then((remote) => {
+          const local = getVisitorSummary();
+          const today = remote.today !== null ? remote.today : local.todayCount;
+          const total = remote.total !== null ? remote.total : local.total;
+          appendChatMessage(`Visitors count - Today: ${today}, Total: ${total}.`, 'bot');
+        }).catch(() => {
+          const local = getVisitorSummary();
+          appendChatMessage(`Visitors count - Today: ${local.todayCount}, Total: ${local.total}.`, 'bot');
+        });
       } else {
         appendChatMessage(response, 'bot');
       }
