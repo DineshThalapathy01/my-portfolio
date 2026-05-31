@@ -65,6 +65,92 @@
   if (lastUpdatedElement) lastUpdatedElement.textContent = manualDate;
   if (lastActiveElement) lastActiveElement.textContent = manualTime;
 
+  const VISITOR_STATS_KEY = 'portfolioVisitorStats';
+  const VISITOR_ID_KEY = 'portfolioVisitorId';
+  const getDateKey = (date) => date.toISOString().slice(0, 10);
+  const formatDateKey = (key) => {
+    const date = new Date(key);
+    return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const generateVisitorId = () => {
+    if (window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return `visitor-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+  };
+
+  const getVisitorId = () => {
+    let visitorId = localStorage.getItem(VISITOR_ID_KEY);
+    if (!visitorId) {
+      visitorId = generateVisitorId();
+      localStorage.setItem(VISITOR_ID_KEY, visitorId);
+    }
+    return visitorId;
+  };
+
+  const getVisitorStats = () => {
+    try {
+      const stats = JSON.parse(localStorage.getItem(VISITOR_STATS_KEY) || '{}');
+      return {
+        globalVisitorIds: Array.isArray(stats.globalVisitorIds) ? stats.globalVisitorIds : [],
+        dailyVisitorIds: typeof stats.dailyVisitorIds === 'object' && stats.dailyVisitorIds !== null ? stats.dailyVisitorIds : {},
+      };
+    } catch {
+      return { globalVisitorIds: [], dailyVisitorIds: {} };
+    }
+  };
+
+  const saveVisitorStats = (stats) => {
+    localStorage.setItem(VISITOR_STATS_KEY, JSON.stringify(stats));
+  };
+
+  const incrementVisitorStats = () => {
+    const visitorId = getVisitorId();
+    const stats = getVisitorStats();
+    const todayKey = getDateKey(new Date());
+
+    if (!stats.globalVisitorIds.includes(visitorId)) {
+      stats.globalVisitorIds.push(visitorId);
+    }
+
+    if (!Array.isArray(stats.dailyVisitorIds[todayKey])) {
+      stats.dailyVisitorIds[todayKey] = [];
+    }
+
+    if (!stats.dailyVisitorIds[todayKey].includes(visitorId)) {
+      stats.dailyVisitorIds[todayKey].push(visitorId);
+    }
+
+    saveVisitorStats(stats);
+    return stats;
+  };
+
+  const getVisitorSummary = (dateKey) => {
+    const stats = getVisitorStats();
+    const todayKey = getDateKey(new Date());
+    const total = stats.globalVisitorIds.length;
+    const todayCount = Array.isArray(stats.dailyVisitorIds[todayKey]) ? stats.dailyVisitorIds[todayKey].length : 0;
+    const requestedKey = dateKey || todayKey;
+    const requestedCount = Array.isArray(stats.dailyVisitorIds[requestedKey]) ? stats.dailyVisitorIds[requestedKey].length : 0;
+    return {
+      stats,
+      total,
+      todayKey,
+      todayCount,
+      requestedKey,
+      requestedCount,
+    };
+  };
+
+  const updateFooterVisitorStats = () => {
+    const { total, todayCount } = getVisitorSummary();
+    const footer = document.querySelector('.app-footer');
+    if (footer) {
+      footer.textContent = `Designed & Maintained by S Dinesh Kumar. Last updated: May 28, 2026. Today visitors: ${todayCount} · Total unique visitors: ${total}.`;
+    }
+  };
+
   const calculateExperience = () => {
     const startDate = new Date("2023-04-12");
     const currentDate = new Date();
@@ -103,6 +189,8 @@
   };
 
   calculateExperience();
+  incrementVisitorStats();
+  updateFooterVisitorStats();
 
   // Make project cards navigate when clicked (except when inner links are clicked)
   document.querySelectorAll('.project-card').forEach((card) => {
@@ -897,6 +985,23 @@
     }
     if (/\b(profile|about|background)\b/.test(lower)) {
       return `${name} is a Full Stack Developer specializing in Angular, Spring Boot, and enterprise systems.`;
+    }
+    if (/\b(visitor|visitor count|visitors|site visits|page views|visit count)\b/.test(lower)) {
+      const dateMatch = lower.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+      const todayKey = getDateKey(new Date());
+      const yesterdayKey = getDateKey(new Date(Date.now() - 86400000));
+      let queryKey = dateMatch ? dateMatch[1] : todayKey;
+      let label = 'today';
+      if (dateMatch) {
+        label = formatDateKey(queryKey);
+      } else if (/\byesterday\b/.test(lower)) {
+        queryKey = yesterdayKey;
+        label = 'yesterday';
+      }
+      const stats = getVisitorStats();
+      const count = stats[queryKey] || 0;
+      const total = Object.values(stats).reduce((sum, value) => sum + Number(value || 0), 0);
+      return `Visitor count for ${label} is ${count}. Total stored visits: ${total}.`;
     }
     if (/\b(contact|email|phone|reach you|contact details)\b/.test(lower)) {
       return `__CONTACT_TRIGGER__`;

@@ -25,10 +25,16 @@ html {
 
 body {
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     background:
         radial-gradient(circle at top left, rgba(31, 157, 148, 0.12), transparent 30%),
         linear-gradient(140deg, #f6fcfb 0%, #dff1ed 42%, #f8fbfa 100%);
     color: var(--text);
+}
+
+main {
+    flex: 1;
 }
 
 button,
@@ -867,6 +873,8 @@ figure {
 }
 
 .app-footer {
+    margin-top: auto;
+    width: 100%;
     padding: 1rem 2rem;
     text-align: center;
     color: var(--muted);
