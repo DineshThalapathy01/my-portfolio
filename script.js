@@ -147,7 +147,11 @@
     const { total, todayCount } = getVisitorSummary();
     const footer = document.querySelector('.app-footer');
     if (footer) {
-      footer.textContent = `Designed & Maintained by S Dinesh Kumar. Last updated: May 28, 2026. Today visitors: ${todayCount} · Total unique visitors: ${total}.`;
+      footer.innerHTML = `Designed & Maintained by S Dinesh Kumar. Last updated: May 28, 2026.` +
+        ` <div class="footer-visitor-summary">` +
+        `  <span class="footer-badge footer-badge-today">Today: ${todayCount}</span>` +
+        `  <span class="footer-badge footer-badge-total">Total: ${total}</span>` +
+        `</div>`;
     }
   };
 
@@ -999,9 +1003,10 @@
         label = 'yesterday';
       }
       const stats = getVisitorStats();
-      const count = stats[queryKey] || 0;
-      const total = Object.values(stats).reduce((sum, value) => sum + Number(value || 0), 0);
-      return `Visitor count for ${label} is ${count}. Total stored visits: ${total}.`;
+      const todayCount = Array.isArray(stats.dailyVisitorIds[todayKey]) ? stats.dailyVisitorIds[todayKey].length : 0;
+      const requestedCount = Array.isArray(stats.dailyVisitorIds[queryKey]) ? stats.dailyVisitorIds[queryKey].length : 0;
+      const total = Array.isArray(stats.globalVisitorIds) ? stats.globalVisitorIds.length : 0;
+      return `Visitor count for ${label} is ${requestedCount}. Total unique visitors: ${total}.`;
     }
     if (/\b(contact|email|phone|reach you|contact details)\b/.test(lower)) {
       return `__CONTACT_TRIGGER__`;
