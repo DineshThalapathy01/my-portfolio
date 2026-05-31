@@ -164,6 +164,16 @@
     };
   };
 
+  const getDailyBreakdown = async () => {
+    try {
+      const response = await fetch(`${WORKER_URL}/daily-breakdown`);
+      return await response.json();
+    } catch (e) {
+      console.error('Failed to fetch daily breakdown:', e);
+      return { breakdown: [] };
+    }
+  };
+
   const updateFooterVisitorStats = async () => {
     const local = getVisitorSummary();
     let counts = {
@@ -185,11 +195,35 @@
     const footer = document.querySelector('.app-footer');
     if (!footer) return;
 
+    // Fetch daily breakdown for the hover dialog
+    let breakdownHtml = '';
+    try {
+      const breakdown = await getDailyBreakdown();
+      if (breakdown.breakdown && breakdown.breakdown.length > 0) {
+        const listItems = breakdown.breakdown
+          .map(({ date, count }) => {
+            const dateObj = new Date(date + 'T00:00:00');
+            const formatted = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            return `<li><span class="breakdown-date">${formatted}</span><span class="breakdown-count">${count}</span></li>`;
+          })
+          .join('');
+        breakdownHtml = `<div class="visitor-breakdown-tooltip">
+          <ul class="breakdown-list">${listItems}</ul>
+        </div>`;
+      }
+    } catch (e) {
+      console.error('Error building breakdown dialog:', e);
+    }
+
     footer.innerHTML =
       `Designed & Maintained by S Dinesh Kumar. Last updated: May 31, 2026.` +
       `<div class="footer-visitor-summary">` +
       `<span class="footer-badge footer-badge-today">Visitors Today: ${counts.today}</span>` +
-      `<span class="footer-badge footer-badge-total">Total Visitors: ${counts.total}</span>` +
+      `<span class="footer-badge footer-badge-total">` +
+        `Total Visitors: ${counts.total}` +
+        `<button class="visitor-info-btn" title="View daily breakdown">ℹ️</button>` +
+        breakdownHtml +
+      `</span>` +
       `</div>`;
   };
 

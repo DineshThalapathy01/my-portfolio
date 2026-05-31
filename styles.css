@@ -920,6 +920,85 @@ figure {
 
 .footer-badge-total {
     background: rgba(31, 157, 148, 0.08);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.visitor-info-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0 0 0 0.25rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-deep);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.visitor-info-btn:hover {
+    opacity: 1;
+}
+
+.visitor-breakdown-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0.5rem;
+    background: white;
+    border: 1px solid rgba(31, 157, 148, 0.16);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    padding: 0;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1001;
+}
+
+.footer-badge-total:hover .visitor-breakdown-tooltip {
+    display: block;
+}
+
+.breakdown-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem 0;
+}
+
+.breakdown-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(31, 157, 148, 0.08);
+    font-size: 0.85rem;
+    color: var(--muted);
+    gap: 1rem;
+}
+
+.breakdown-list li:last-child {
+    border-bottom: none;
+}
+
+.breakdown-date {
+    flex: 1;
+    color: var(--accent-deep);
+    font-weight: 500;
+}
+
+.breakdown-count {
+    font-weight: 700;
+    color: var(--accent-text);
+    min-width: 2rem;
+    text-align: right;
 }
 
 .menu-open .app-nav {
