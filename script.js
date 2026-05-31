@@ -1308,24 +1308,33 @@ Portfolio facts:
             const today = (remote && typeof remote.today === 'number') ? remote.today : local.todayCount;
             const total = (remote && typeof remote.total === 'number') ? remote.total : local.total;
 
-            // build HTML: header + grid of date items (5 per row) scrollable
+            // build ASCII table for chat: Date | Visitors Count
             const items = (breakdown && Array.isArray(breakdown.breakdown)) ? breakdown.breakdown : [];
-            const itemHtml = items.map(({ date, count }) => {
+            // format rows as DD-MM-YYYY and count strings
+            const rows = items.map(({ date, count }) => {
               const d = new Date(date + 'T00:00:00');
-              const fmt = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-              return `<div class="bd-item"><div class="bd-date">${fmt}</div><div class="bd-count">${count}</div></div>`;
-            }).join('');
+              const dd = String(d.getDate()).padStart(2, '0');
+              const mm = String(d.getMonth() + 1).padStart(2, '0');
+              const yyyy = d.getFullYear();
+              return { date: `${dd}-${mm}-${yyyy}`, count: String(count) };
+            });
 
-            const html = `
-              <div class="visitor-summary-html">
-                <div class="visitor-summary-header">Visitors count - Today: <strong>${today}</strong>, Total: <strong>${total}</strong></div>
-                <div class="visitor-breakdown-grid" role="list">
-                  ${itemHtml}
-                </div>
-              </div>
-            `;
+            const dateHeader = 'Date';
+            const countHeader = 'Visitors Count';
+            const dateWidth = Math.max(dateHeader.length, ...(rows.map(r => r.date.length)));
+            const countWidth = Math.max(countHeader.length, ...(rows.map(r => r.count.length)));
 
-            appendChatHtml(html, 'bot');
+            const sep = `+${'-'.repeat(dateWidth + 2)}+${'-'.repeat(countWidth + 2)}+`;
+            const headerLine = `| ${dateHeader.padEnd(dateWidth)} | ${countHeader.padStart(countWidth)} |`;
+
+            let table = `${sep}\n${headerLine}\n${sep}\n`;
+            rows.forEach(r => {
+              table += `| ${r.date.padEnd(dateWidth)} | ${r.count.padStart(countWidth)} |\n`;
+            });
+            table += sep;
+
+            const out = `Visitors count - Today: ${today}, Total: ${total}\n\n${table}`;
+            appendChatMessage(out, 'bot');
           } catch (err) {
             const local = getVisitorSummary();
             appendChatMessage(`Visitors count - Today: ${local.todayCount}, Total: ${local.total}.`, 'bot');
