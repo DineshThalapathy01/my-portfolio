@@ -1016,26 +1016,38 @@ figure {
 
 /* Chat breakdown grid (used by LEO responses) */
 .chat-html-content .visitor-breakdown-grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    /* render as a horizontal, scrollable strip so users can see up to 5 items
+       across and scroll for more. nowrap keeps items on a single row. */
+    display: flex;
+    flex-wrap: nowrap;
     gap: 0.5rem;
     padding: 0.5rem;
-    max-height: 180px;
-    overflow-y: auto;
+    max-height: 160px;
+    overflow-x: auto;
+    overflow-y: hidden;
     border-top: 1px solid rgba(31,157,148,0.06);
+    -webkit-overflow-scrolling: touch;
 }
 
 .chat-html-content .bd-item {
     background: rgba(31,157,148,0.04);
     border: 1px solid rgba(31,157,148,0.06);
-    border-radius: 6px;
-    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    padding: 0.5rem 0.6rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
     font-size: 0.85rem;
+    min-width: 110px; /* ensures multiple items are visible; adjust to show ~5 across */
+    box-sizing: border-box;
+}
+
+.chat-html-content .visitor-summary-header {
+    padding: 0.5rem 0.6rem 0.25rem;
+    color: var(--accent-deep);
+    font-weight: 600;
 }
 
 .chat-html-content .bd-date {
