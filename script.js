@@ -155,6 +155,91 @@
     }
   };
 
+  // Debug panel for visitor stats (temporary - helps cross-device testing)
+  const createVisitorDebugPanel = () => {
+    if (document.getElementById('visitorDebugPanel')) return;
+    const panel = document.createElement('div');
+    panel.id = 'visitorDebugPanel';
+    panel.style.cssText = 'position:fixed;left:8px;bottom:80px;background:rgba(0,0,0,0.75);color:#fff;padding:8px 10px;font-size:12px;z-index:99999;max-width:320px;border-radius:6px;backdrop-filter:blur(4px);';
+    panel.innerHTML = `<div style="font-weight:600;margin-bottom:6px">Visitor Debug</div>
+      <div id="dbgVisitorId" style="word-break:break-all;margin-bottom:6px">ID: </div>
+      <div id="dbgStats" style="margin-bottom:6px">Stats: </div>
+      <div style="display:flex;gap:6px;margin-bottom:6px"><button id="dbgRefresh" type="button">Refresh</button><button id="dbgExport" type="button">Export</button><button id="dbgCopy" type="button">Copy</button></div>
+      <div style="margin-bottom:6px"><textarea id="dbgImportArea" placeholder="Paste visitor-stats JSON here to import/merge" style="width:100%;height:80px;font-size:12px;padding:6px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#fff"></textarea></div>
+      <div style="display:flex;gap:6px;margin-bottom:6px"><button id="dbgImport" type="button">Import & Merge</button><button id="dbgClear" type="button">Clear Local</button></div>
+      <div style="margin-top:6px;font-size:11px;color:#ddd">Temporary debug panel — safe to remove later.</div>`;
+    document.body.appendChild(panel);
+    const idEl = document.getElementById('dbgVisitorId');
+    const statsEl = document.getElementById('dbgStats');
+    const refresh = () => {
+      const id = localStorage.getItem(VISITOR_ID_KEY) || '(none)';
+      const statsRaw = localStorage.getItem(VISITOR_STATS_KEY) || '{}';
+      let parsed = {};
+      try { parsed = JSON.parse(statsRaw); } catch (e) { parsed = {}; }
+      const summary = getVisitorSummary();
+      idEl.textContent = `ID: ${id}`;
+      statsEl.textContent = `Today: ${summary.todayCount}, Total: ${summary.total}`;
+    };
+    panel.querySelector('#dbgRefresh').addEventListener('click', refresh);
+    panel.querySelector('#dbgExport').addEventListener('click', () => {
+      const data = localStorage.getItem(VISITOR_STATS_KEY) || '{}';
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'visitor-stats.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+    panel.querySelector('#dbgCopy').addEventListener('click', () => {
+      const data = localStorage.getItem(VISITOR_STATS_KEY) || '{}';
+      navigator.clipboard.writeText(data).then(() => {
+        try { window.alert('Visitor stats copied to clipboard'); } catch (e) {}
+      }, () => { try { window.alert('Copy failed'); } catch (e) {} });
+    });
+    panel.querySelector('#dbgImport').addEventListener('click', () => {
+      const txt = panel.querySelector('#dbgImportArea').value.trim();
+      if (!txt) { try { window.alert('Paste visitor-stats JSON to import'); } catch (e) {} return; }
+      try {
+        const incoming = JSON.parse(txt);
+        mergeVisitorStats(incoming);
+        refresh();
+        try { window.alert('Imported and merged successfully'); } catch (e) {}
+      } catch (err) {
+        try { window.alert('Invalid JSON'); } catch (e) {}
+      }
+    });
+    panel.querySelector('#dbgClear').addEventListener('click', () => {
+      if (!confirm('Clear local visitor stats? This cannot be undone for this browser.')) return;
+      localStorage.removeItem(VISITOR_STATS_KEY);
+      localStorage.removeItem(VISITOR_ID_KEY);
+      incrementVisitorStats();
+      updateFooterVisitorStats();
+      refresh();
+    });
+    refresh();
+  };
+
+  // Merge incoming stats object into local storage stats (union unique ids)
+  const mergeVisitorStats = (incoming) => {
+    if (!incoming || typeof incoming !== 'object') return;
+    const current = getVisitorStats();
+    const merged = { globalVisitorIds: Array.from(new Set(current.globalVisitorIds)), dailyVisitorIds: { ...current.dailyVisitorIds } };
+    if (Array.isArray(incoming.globalVisitorIds)) {
+      incoming.globalVisitorIds.forEach((id) => { if (!merged.globalVisitorIds.includes(id)) merged.globalVisitorIds.push(id); });
+    }
+    if (incoming.dailyVisitorIds && typeof incoming.dailyVisitorIds === 'object') {
+      Object.keys(incoming.dailyVisitorIds).forEach((day) => {
+        const arr = Array.isArray(incoming.dailyVisitorIds[day]) ? incoming.dailyVisitorIds[day] : [];
+        if (!Array.isArray(merged.dailyVisitorIds[day])) merged.dailyVisitorIds[day] = [];
+        arr.forEach((id) => { if (!merged.dailyVisitorIds[day].includes(id)) merged.dailyVisitorIds[day].push(id); });
+      });
+    }
+    saveVisitorStats(merged);
+    updateFooterVisitorStats();
+  };
+
   const calculateExperience = () => {
     const startDate = new Date("2023-04-12");
     const currentDate = new Date();
