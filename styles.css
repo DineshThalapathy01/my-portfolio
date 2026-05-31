@@ -196,7 +196,7 @@ img {
 .home-hero-copy h1 {
     /* allow longer, more natural line lengths to avoid excessive wrapping */
     max-width: 70ch;
-    font-size: clamp(2.8rem, 6vw, 5.2rem);
+    font-size: clamp(2.8rem, 6vw, 3.2rem);
     line-height: 1.02;
     letter-spacing: -0.02em;
     color: #0d2833;
