@@ -174,6 +174,41 @@
     }
   };
 
+  // Make tooltip sticky and avoid flicker: manage open/close with a small delay.
+  const setupFooterTooltip = () => {
+    const footer = document.querySelector('.app-footer');
+    if (!footer) return;
+    const totalBadge = footer.querySelector('.footer-badge-total');
+    if (!totalBadge) return;
+
+    let closeTimer = null;
+
+    const openTooltip = () => {
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+        closeTimer = null;
+      }
+      totalBadge.classList.add('open');
+    };
+
+    const closeTooltip = () => {
+      if (closeTimer) clearTimeout(closeTimer);
+      closeTimer = setTimeout(() => totalBadge.classList.remove('open'), 400);
+    };
+
+    totalBadge.addEventListener('mouseenter', openTooltip);
+    totalBadge.addEventListener('focusin', openTooltip);
+    totalBadge.addEventListener('mouseleave', closeTooltip);
+    totalBadge.addEventListener('focusout', closeTooltip);
+
+    // keep it open while hovering the tooltip itself
+    const tooltip = totalBadge.querySelector('.visitor-breakdown-tooltip');
+    if (tooltip) {
+      tooltip.addEventListener('mouseenter', openTooltip);
+      tooltip.addEventListener('mouseleave', closeTooltip);
+    }
+  };
+
   const updateFooterVisitorStats = async () => {
     const local = getVisitorSummary();
     let counts = {
@@ -225,6 +260,8 @@
         breakdownHtml +
       `</span>` +
       `</div>`;
+    // ensure tooltip behaviors are wired after inserting the HTML
+    setupFooterTooltip();
   };
 
   // Cloudflare Worker Visitor Counter
@@ -484,6 +521,23 @@
     timeLabel.className = 'chat-time';
     timeLabel.textContent = formatTime();
     message.appendChild(textLine);
+    message.appendChild(timeLabel);
+    chatBody.appendChild(message);
+    chatBody.scrollTop = chatBody.scrollHeight;
+    return message;
+  };
+
+  // append HTML content to chat (used for breakdown grid)
+  const appendChatHtml = (html, type = 'bot') => {
+    const message = document.createElement('div');
+    message.className = `chat-message ${type}`;
+    const container = document.createElement('div');
+    container.className = 'chat-html-content';
+    container.innerHTML = html;
+    const timeLabel = document.createElement('span');
+    timeLabel.className = 'chat-time';
+    timeLabel.textContent = formatTime();
+    message.appendChild(container);
     message.appendChild(timeLabel);
     chatBody.appendChild(message);
     chatBody.scrollTop = chatBody.scrollHeight;
@@ -1246,16 +1300,37 @@ Portfolio facts:
           showEmailDecisionSuggestions();
         }, 600);
       } else if (response === '__VISITOR_REMOTE__') {
-        // fetch remote counts and reply
-        getRemoteCounts().then((remote) => {
-          const local = getVisitorSummary();
-          const today = remote.today !== null ? remote.today : local.todayCount;
-          const total = remote.total !== null ? remote.total : local.total;
-          appendChatMessage(`Visitors count - Today: ${today}, Total: ${total}.`, 'bot');
-        }).catch(() => {
-          const local = getVisitorSummary();
-          appendChatMessage(`Visitors count - Today: ${local.todayCount}, Total: ${local.total}.`, 'bot');
-        });
+        // fetch remote counts and daily breakdown, then reply with a scrollable 5-column grid
+        (async () => {
+          try {
+            const [remote, breakdown] = await Promise.all([getRemoteCounts(), getDailyBreakdown()]);
+            const local = getVisitorSummary();
+            const today = (remote && typeof remote.today === 'number') ? remote.today : local.todayCount;
+            const total = (remote && typeof remote.total === 'number') ? remote.total : local.total;
+
+            // build HTML: header + grid of date items (5 per row) scrollable
+            const items = (breakdown && Array.isArray(breakdown.breakdown)) ? breakdown.breakdown : [];
+            const itemHtml = items.map(({ date, count }) => {
+              const d = new Date(date + 'T00:00:00');
+              const fmt = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+              return `<div class="bd-item"><div class="bd-date">${fmt}</div><div class="bd-count">${count}</div></div>`;
+            }).join('');
+
+            const html = `
+              <div class="visitor-summary-html">
+                <div class="visitor-summary-header">Visitors count - Today: <strong>${today}</strong>, Total: <strong>${total}</strong></div>
+                <div class="visitor-breakdown-grid" role="list">
+                  ${itemHtml}
+                </div>
+              </div>
+            `;
+
+            appendChatHtml(html, 'bot');
+          } catch (err) {
+            const local = getVisitorSummary();
+            appendChatMessage(`Visitors count - Today: ${local.todayCount}, Total: ${local.total}.`, 'bot');
+          }
+        })();
       } else {
         appendChatMessage(response, 'bot');
       }

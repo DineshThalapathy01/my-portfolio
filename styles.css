@@ -949,22 +949,29 @@ figure {
     position: absolute;
     bottom: 100%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(6px);
     margin-bottom: 0.5rem;
     background: white;
     border: 1px solid rgba(31, 157, 148, 0.16);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     padding: 0;
-    min-width: 200px;
+    min-width: 220px;
     max-height: 300px;
     overflow-y: auto;
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
     z-index: 1001;
 }
 
-.footer-badge-total:hover .visitor-breakdown-tooltip {
-    display: block;
+/* show when hovering parent or tooltip itself, or when JS adds .open */
+.footer-badge-total:hover .visitor-breakdown-tooltip,
+.footer-badge-total.open .visitor-breakdown-tooltip,
+.visitor-breakdown-tooltip:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
 }
 
 .breakdown-list {
@@ -1005,6 +1012,40 @@ figure {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+}
+
+/* Chat breakdown grid (used by LEO responses) */
+.chat-html-content .visitor-breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.5rem;
+    padding: 0.5rem;
+    max-height: 180px;
+    overflow-y: auto;
+    border-top: 1px solid rgba(31,157,148,0.06);
+}
+
+.chat-html-content .bd-item {
+    background: rgba(31,157,148,0.04);
+    border: 1px solid rgba(31,157,148,0.06);
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.chat-html-content .bd-date {
+    color: var(--accent-deep);
+    font-weight: 600;
+}
+
+.chat-html-content .bd-count {
+    font-weight: 800;
+    color: var(--accent-text);
 }
 
 @keyframes fadeInDown {
