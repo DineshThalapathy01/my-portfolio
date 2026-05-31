@@ -1060,6 +1060,49 @@ figure {
     color: var(--accent-text);
 }
 
+/* Styles for visitor table rendered inside chat */
+.chat-html-content .visitor-table-wrap {
+    width: 100%;
+    max-height: 220px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.25rem 0.5rem 0.6rem;
+}
+
+.chat-html-content .visitor-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    background: transparent;
+}
+
+.chat-html-content .visitor-table th,
+.chat-html-content .visitor-table td {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid rgba(31,157,148,0.06);
+    text-align: left;
+}
+
+.chat-html-content .visitor-table thead th {
+    background: rgba(31,157,148,0.04);
+    color: var(--accent-deep);
+    font-weight: 700;
+}
+
+.chat-html-content .visitor-table tbody tr:nth-child(odd) td {
+    background: rgba(31,157,148,0.02);
+}
+
+.chat-html-content .vt-date {
+    white-space: nowrap;
+    width: 1px;
+}
+
+.chat-html-content .vt-count {
+    text-align: right;
+    width: 1px;
+}
+
 @keyframes fadeInDown {
     from {
         opacity: 0;
