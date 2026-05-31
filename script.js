@@ -186,7 +186,7 @@
     if (!footer) return;
 
     footer.innerHTML =
-      `Designed & Maintained by S Dinesh Kumar. Last updated: May 28, 2026.` +
+      `Designed & Maintained by S Dinesh Kumar. Last updated: May 31, 2026.` +
       `<div class="footer-visitor-summary">` +
       `<span class="footer-badge footer-badge-today">Visitors Today: ${counts.today}</span>` +
       `<span class="footer-badge footer-badge-total">Total Visitors: ${counts.total}</span>` +
