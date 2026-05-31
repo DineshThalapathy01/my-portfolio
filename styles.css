@@ -1045,7 +1045,7 @@ figure {
 }
 
 .chat-html-content .visitor-summary-header {
-    padding: 0.5rem 0.6rem 0.25rem;
+    padding: 0.35rem 0.45rem 0.2rem;
     color: var(--accent-deep);
     font-weight: 600;
 }
@@ -1061,26 +1061,41 @@ figure {
 }
 
 /* Styles for visitor table rendered inside chat */
+.chat-html-content .visitor-summary-html {
+    width: 100%;
+}
+
 .chat-html-content .visitor-table-wrap {
     width: 100%;
     max-height: 220px;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0.25rem 0.5rem 0.6rem;
+    padding: 0.25rem 0.4rem 0.4rem;
 }
 
 .chat-html-content .visitor-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
     font-size: 0.9rem;
     background: transparent;
 }
 
 .chat-html-content .visitor-table th,
 .chat-html-content .visitor-table td {
-    padding: 0.45rem 0.6rem;
+    padding: 0.35rem 0.45rem;
     border: 1px solid rgba(31,157,148,0.06);
     text-align: left;
+}
+
+.chat-html-content .visitor-table th:first-child,
+.chat-html-content .vt-date {
+    width: 60%;
+}
+
+.chat-html-content .visitor-table th:last-child,
+.chat-html-content .vt-count {
+    width: 40%;
 }
 
 .chat-html-content .visitor-table thead th {
@@ -1095,12 +1110,10 @@ figure {
 
 .chat-html-content .vt-date {
     white-space: nowrap;
-    width: 1px;
 }
 
 .chat-html-content .vt-count {
     text-align: right;
-    width: 1px;
 }
 
 @keyframes fadeInDown {
