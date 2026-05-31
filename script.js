@@ -779,6 +779,17 @@
   let emailFlow = null;
   let emailData = { senderEmail: '', subject: '', body: '' };
 
+  // ── Feedback flow state machine ───────────────────────────────────────────
+  // States: null | 'ASK_NAME' | 'ASK_EMAIL' | 'ASK_SUBJECT' | 'ASK_MESSAGE' | 'SUBMITTING'
+  let feedbackFlow = null;
+  let feedbackData = { name: '', email: '', subject: '', message: '' };
+
+  const resetFeedbackFlow = () => {
+    feedbackFlow = null;
+    feedbackData = { name: '', email: '', subject: '', message: '' };
+    if (chatInput) chatInput.placeholder = 'Ask me about my work...';
+  };
+
   const isTemplatesPage = window.location.pathname.includes('/templates/');
   const CONTACT_INFO = {
     email: 'dineshkumarnavarasam@gmail.com',
@@ -1099,6 +1110,110 @@
       if (shouldShowDraftFallback) {
         showEmailFallbackSuggestions(draftData);
       }
+      return true;
+    }
+
+    return false;
+  };
+
+  const submitFeedbackFromChat = async () => {
+    if (!feedbackData.name || !feedbackData.email || !feedbackData.subject || !feedbackData.message) {
+      return false;
+    }
+
+    feedbackFlow = 'SUBMITTING';
+    lockInput('Submitting feedback...');
+    hideSuggestionPanel(true);
+    startTypingIndicator();
+
+    try {
+      const response = await fetch(FEEDBACK_WORKER_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(feedbackData),
+      });
+
+      stopTypingIndicator();
+      unlockInput();
+
+      if (!response.ok) {
+        throw new Error(`Feedback submission failed with status ${response.status}`);
+      }
+
+      appendChatMessage('✅ Thank you! Your feedback has been submitted successfully.', 'bot');
+      resetFeedbackFlow();
+      return true;
+    } catch (err) {
+      stopTypingIndicator();
+      unlockInput();
+      console.error('Feedback submission failed:', err);
+      appendChatMessage('I could not submit your feedback directly due to a network or CORS issue. Please use the Feedback page or email Dinesh if this continues.', 'bot');
+      resetFeedbackFlow();
+      return false;
+    }
+  };
+
+  const handleFeedbackFlow = async (text) => {
+    if (!feedbackFlow) return false;
+    const trimmed = text.trim();
+    if (!trimmed) return true;
+
+    if (feedbackFlow === 'ASK_NAME') {
+      if (trimmed.length < 3 || trimmed.length > 100) {
+        appendChatMessage(trimmed, 'user');
+        appendChatMessage('Please provide your full name between 3 and 100 characters.', 'bot');
+        return true;
+      }
+      feedbackData.name = trimmed;
+      feedbackFlow = 'ASK_EMAIL';
+      appendChatMessage(trimmed, 'user');
+      chatInput.value = '';
+      appendChatMessage('Great! What is your email address?', 'bot');
+      showStaticPromptChip('✏️ Your email');
+      return true;
+    }
+
+    if (feedbackFlow === 'ASK_EMAIL') {
+      if (!isValidEmail(trimmed)) {
+        appendChatMessage(trimmed, 'user');
+        appendChatMessage('Please enter a valid email address like name@example.com.', 'bot');
+        return true;
+      }
+      feedbackData.email = normalizeEmail(trimmed);
+      feedbackFlow = 'ASK_SUBJECT';
+      appendChatMessage(trimmed, 'user');
+      chatInput.value = '';
+      appendChatMessage('Thanks! Please enter the subject of your feedback.', 'bot');
+      showStaticPromptChip('✏️ Feedback subject');
+      return true;
+    }
+
+    if (feedbackFlow === 'ASK_SUBJECT') {
+      if (trimmed.length === 0 || trimmed.length > 150) {
+        appendChatMessage(trimmed, 'user');
+        appendChatMessage('Please provide a short subject up to 150 characters.', 'bot');
+        return true;
+      }
+      feedbackData.subject = trimmed;
+      feedbackFlow = 'ASK_MESSAGE';
+      appendChatMessage(trimmed, 'user');
+      chatInput.value = '';
+      appendChatMessage('Almost done! Share your message in 10 to 1000 characters.', 'bot');
+      showStaticPromptChip('✏️ Your message');
+      return true;
+    }
+
+    if (feedbackFlow === 'ASK_MESSAGE') {
+      if (trimmed.length < 10 || trimmed.length > 1000) {
+        appendChatMessage(trimmed, 'user');
+        appendChatMessage('Please write a feedback message between 10 and 1000 characters.', 'bot');
+        return true;
+      }
+      feedbackData.message = trimmed;
+      appendChatMessage(trimmed, 'user');
+      chatInput.value = '';
+      await submitFeedbackFromChat();
       return true;
     }
 
@@ -1827,29 +1942,27 @@ Portfolio facts:
   const enhancedHandleUserInput = async (text) => {
     if (!text) return;
 
+    if (feedbackFlow) {
+      const handled = await handleFeedbackFlow(text);
+      if (handled) return;
+    }
+
     const feedbackTrigger = handleLEOFeedback(text);
     if (feedbackTrigger === '__FEEDBACK_TRIGGER__') {
       appendChatMessage(text, 'user');
       chatInput.value = '';
       if (chatSuggestions) renderSuggestions([]);
-      appendChatMessage("I'd love to hear your feedback! You can submit detailed feedback through the Feedback page in the navigation menu, or you can share your thoughts directly here in the chat.", 'bot');
-      const feedbackLink = { label: 'Go to Feedback Page', value: 'feedback-page', className: 'suggestion-item-action' };
-      renderSuggestions([feedbackLink], {
-        sticky: true,
-        variant: 'actions',
-        onSelect: (value) => {
-          if (value === 'feedback-page') {
-            window.location.href = isTemplatesPage ? 'feedback.html' : 'templates/feedback.html';
-          }
-        },
-      });
+      appendChatMessage('Great! Let me collect your feedback details. What is your name?', 'bot');
+      feedbackFlow = 'ASK_NAME';
+      feedbackData = { name: '', email: '', subject: '', message: '' };
+      showStaticPromptChip('✏️ Your name');
       return;
     }
     if (feedbackTrigger === '__RESUME_DOWNLOAD__') {
       appendChatMessage(text, 'user');
       chatInput.value = '';
       if (chatSuggestions) renderSuggestions([]);
-      appendChatMessage("You can download my resume using the Resume button in the header navigation, or click the button below.", 'bot');
+      appendChatMessage('You can download my resume using the Resume button in the header navigation, or click the button below.', 'bot');
       const resumeLink = { label: '⬇️ Download Resume', value: 'resume-download', className: 'suggestion-item-action' };
       renderSuggestions([resumeLink], {
         sticky: true,
