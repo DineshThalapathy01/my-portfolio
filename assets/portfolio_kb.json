@@ -1,0 +1,139 @@
+{
+  "documents": [
+    {
+      "id": "index",
+      "path": "index.html",
+      "title": "S Dinesh Kumar — Portfolio",
+      "headings": [
+        "Java Full‑Stack Developer",
+        "I build production‑ready Java + Angular applications users can trust, from first login to final approval.",
+        "Practical engineering with business context.",
+        "What I Bring",
+        "Delivery strengths shaped by real production work",
+        "Experience Snapshot"
+      ],
+      "paragraphs": [
+        "Secure systems. Reliable delivery. AI‑assisted engineering.",
+        "I deliver secure Spring Boot backends and maintainable Angular frontends, using AI to speed development, testing, and regression while keeping security and operational reliability first.",
+        "I enjoy translating complex requirements into backend logic, approvals, integrations, and UI flows that teams can actually operate.",
+        "Take a look at the project details, then reach out if you want to discuss product work, engineering roles, or collaboration."
+      ],
+      "skills": ["Java", "Spring Boot", "Angular", "JWT", "RBAC", "PostgreSQL", "Flutter"],
+      "experience": "Core strengths across backend, security, UI, and deployment; Application Engineering and Enterprise Delivery",
+      "company": "Eagle Software India Pvt Ltd",
+      "location": "Chennai, India"
+    },
+    {
+      "id": "about",
+      "path": "templates/about.html",
+      "title": "About — Education & background",
+      "headings": ["Education & background"],
+      "paragraphs": ["Technical foundation in engineering and experience-driven delivery across academic, product, and enterprise projects."],
+      "education": [
+        {"name": "SSLC", "institution": "Navarasam Matriculation Higher Secondary School", "year": 2016, "score": "84%"},
+        {"name": "HSC", "institution": "Navarasam Matriculation Higher Secondary School", "year": 2018, "score": "62%"},
+        {"name": "B.E (EEE)", "institution": "Nandha Engineering College, Anna University", "year": 2022, "score": "8.59 CGPA"}
+      ]
+    },
+    {
+      "id": "projects",
+      "path": "templates/projects.html",
+      "title": "Projects — Work highlights and product deliveries",
+      "headings": ["Work highlights and product deliveries"],
+      "paragraphs": ["This is my personal project collection and professional work — each item links to a dedicated page describing role, technologies used, and outcomes."],
+      "projects": [
+        {"slug":"sta_explanation","title":"SMART TRAVELLERS APP","period":"2021 - 2022","brief":"Academic project; paper published; Flutter app for travel guidance"},
+        {"slug":"regression_explanation","title":"REGRESSION TESTING TOOL","client":"FEDEX","period":"March 2024 – July 2024","brief":"Full Stack development for regression file management, secure sessions, scheduled automation, Excel reporting."},
+        {"slug":"chatbot_explanation","title":"CHATBOT APPLICATION","client":"FEDEX","period":"June 2024 – September 2024","brief":"Chatbot portal with file filtering, content moderation, Thymeleaf-driven UI."},
+        {"slug":"bbocw","title":"BBOCW — Bihar Building & Other Construction Workers Welfare Board","period":"Jan 2025 – May 2026","brief":"Large-scale government welfare portal with Aadhaar integration, RBAC, payment gateway, CMS, DMS, chatbot modules."},
+        {"slug":"tncsc","title":"TNCSC — Tamil Nadu Civil Supplies Corporation","period":"July 2025 – Present","brief":"Enterprise access control and user management modules with Aadhaar integration and GCP-hosted microservices."}
+      ]
+    },
+    {
+      "id": "bbocw",
+      "path": "templates/bbocw.html",
+      "title": "Bihar Building & Other Construction Workers Welfare Board",
+      "headings": ["Bihar Welfare Portal", "Responsibilities"],
+      "paragraphs": [
+        "Application: BIHAR BUILDING & OTHER CONSTRUCTION WORKERS WELFARE BOARD (BBOCW)",
+        "Current Application Status: LIVE – bocwboard.bihar.gov.in"
+      ],
+      "client": "Government of BIHAR",
+      "working_period": "Jan 2025 – May 2026",
+      "office_location": "Eagle Tower, Chennai",
+      "role": "Full Stack Developer",
+      "responsibilities": [
+        "Developed modules using Angular 16, Java Spring Boot, and PostgreSQL including Profile Update, Application Renewal, Payment Gateway, RBAC, CMS, DMS, and Chat-bot.",
+        "Implemented Aadhaar integration (OTP, eKYC, biometric) and biometric device configuration.",
+        "Worked on security with Spring Security, JWT, CAPTCHA, encryption, and backend validation.",
+        "Designed RBAC with Geo x User x Role Mapping and Role x Menu Mapping; built CMS and DMS modules; integrated payment gateway and transaction logging."
+      ]
+    },
+    {
+      "id": "tncsc",
+      "path": "templates/tncsc.html",
+      "title": "Tamil Nadu And Civil Supplies Corporation (TNCSC)",
+      "headings": ["Civil Supplies Portal", "Responsibilities"],
+      "paragraphs": ["Application Status: Partially LIVE (User Management & Access Control Modules in Production)"],
+      "client": "Government of TAMILNADU",
+      "working_period": "July 2025 – Present",
+      "office_location": "Eagle Tower, Chennai",
+      "role": "Full Stack Developer",
+      "responsibilities": [
+        "Developed User Management, Menu Management, Role Menu Mapping, Workflow Configuration, Payroll, Loan Management, EDLI/FBF modules.",
+        "Implemented secure authentication and authorization using Spring Security and JWT; deployed services on GCP.",
+        "Designed scalable master-driven access configuration and dynamic role/menu rendering."
+      ],
+      "stack_summary": ["Angular (16/19/20)", "Java 17", "Spring Boot", "PostgreSQL", "GCP", "JWT", "RBAC"]
+    },
+    {
+      "id": "contact",
+      "path": "templates/contact.html",
+      "title": "Contact — Get in touch",
+      "headings": ["Contact Me"],
+      "paragraphs": ["For project collaboration or technical discussions, my contact details are below."],
+      "contact": {
+        "email": "dineshkumarnavarasam@gmail.com",
+        "phone": "",
+        "location": "Chennai, India",
+        "portfolio": "https://dineshthalapathy01.github.io/my-portfolio/",
+        "linkedin": "https://www.linkedin.com/in/s-dinesh-kumar-752a30193/",
+        "github": "https://github.com/dineshkumar13dk"
+      }
+    },
+    {
+      "id": "eagle_software",
+      "path": "templates/eagle_software.html",
+      "title": "Eagle Software India Private Limited — Experience",
+      "paragraphs": ["Period: JANUARY 2025 – Present", "Office: Eagle Tower, Chennai", "Role: Full Stack Developer"],
+      "projects": ["BBOCW"],
+      "responsibilities": ["Developed and maintained modules for BBOCW; Aadhaar integration; Spring Security and JWT; backend business logic and DB design."]
+    },
+    {
+      "id": "previous_companies",
+      "path": "templates/previous_companies.html",
+      "title": "Previous Companies",
+      "headings": ["Company work across development and testing"],
+      "paragraphs": ["These career entries show deep involvement in quality, delivery, and product interfaces for enterprise and civic systems."],
+      "companies": ["MphasiS The Next Applied", "Eagle Software India Private Limited", "Nandha Engineering College"]
+    },
+    {
+      "id": "regression",
+      "path": "templates/regression_explanation.html",
+      "title": "Regression Testing Tool",
+      "paragraphs": ["Application: REGRESSION TESTING TOOL", "Client Name: FEDEX", "Working Period: March 2024 – July 2024"],
+      "role": "Full Stack Developer",
+      "responsibilities": ["File management, data processing, user sessions, scheduled tasks, Excel export, logging and reporting."]
+    },
+    {
+      "id": "sta",
+      "path": "templates/sta_explanation.html",
+      "title": "Smart Travellers App",
+      "paragraphs": ["An accessible travel guidance system for public transport networks, focused on simplifying route use and improving rider confidence."],
+      "client": "Nandha Engineering College",
+      "working_period": "2021 - 2022",
+      "role": "Research & Development",
+      "highlights": ["Improved traveler satisfaction with on-trip navigation information.", "Designed modular, user-friendly system for transport networks.", "Supported route discovery and environmental benefits through better transit use."]
+    }
+  ]
+}

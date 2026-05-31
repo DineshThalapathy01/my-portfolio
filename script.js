@@ -1164,7 +1164,7 @@
   const LEO_WORKER_URL = 'https://leo-proxy.dineshthalapathy62.workers.dev';
   const MAX_REPLY_CHARS = 750;
   const BLOCKED_PORTFOLIO_REPLY = "I can only answer questions related to S Dinesh Kumar's portfolio, projects, skills, experience, and professional background.";
-  const MISSING_INFO_REPLY = "I do not have that information in Dinesh's portfolio.";
+  const MISSING_INFO_REPLY = "That information is not available in S Dinesh Kumar's portfolio. You can ask about his projects, skills, experience, education, technologies, company history, or contact details.";
 
   const PORTFOLIO_CONTEXT = `You are LEO, the portfolio assistant for S Dinesh Kumar.
 Rules:
@@ -1233,6 +1233,131 @@ Portfolio facts:
     return cleaned;
   };
 
+  // Trim reply to a maximum number of words (default 300)
+  const trimReplyWords = (text, maxWords = 300) => {
+    if (!text || typeof text !== 'string') return '';
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    if (words.length <= maxWords) return text.trim();
+    return words.slice(0, maxWords).join(' ') + '…';
+  };
+
+  // --- Local Knowledge Base (loaded from assets/portfolio_kb.json) ---
+  let KB_DATA = null;
+
+  const ensureKBLoaded = async () => {
+    if (KB_DATA) return KB_DATA;
+    try {
+      const res = await fetch('/assets/portfolio_kb.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('KB fetch failed');
+      KB_DATA = await res.json();
+      return KB_DATA;
+    } catch (e) {
+      console.error('Failed to load KB:', e);
+      KB_DATA = null;
+      return null;
+    }
+  };
+
+  const normalizeText = (s) => (s || '').toString().replace(/\s+/g, ' ').trim().toLowerCase();
+
+  const buildDocText = (doc) => {
+    let parts = [];
+    if (doc.title) parts.push(doc.title);
+    if (doc.headings) parts.push(doc.headings.join(' '));
+    if (doc.paragraphs) parts.push(doc.paragraphs.join(' '));
+    if (doc.responsibilities) parts.push(doc.responsibilities.join(' '));
+    if (doc.projects) parts.push(doc.projects.map(p => (p.title || p)).join(' '));
+    if (doc.contact) parts.push(Object.values(doc.contact).join(' '));
+    if (doc.skills) parts.push(doc.skills.join(' '));
+    if (doc.companies) parts.push(doc.companies.join(' '));
+    return normalizeText(parts.join(' '));
+  };
+
+  const searchKB = (query, maxResults = 5) => {
+    if (!KB_DATA || !Array.isArray(KB_DATA.documents)) return [];
+    const q = normalizeText(query);
+    if (!q) return [];
+    const tokens = q.split(/\W+/).filter(Boolean).filter(t => t.length > 2);
+    if (tokens.length === 0) return [];
+    const scored = [];
+    for (const doc of KB_DATA.documents) {
+      const text = buildDocText(doc);
+      let score = 0;
+      for (const t of tokens) {
+        if (text.includes(t)) score += 1;
+      }
+      if (score > 0) scored.push({ doc, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, maxResults).map(s => s.doc);
+  };
+
+  // Looser/fallback KB search: allow shorter tokens and substring matches to infer intent
+  const searchKBLoose = (query, maxResults = 6) => {
+    if (!KB_DATA || !Array.isArray(KB_DATA.documents)) return [];
+    const q = normalizeText(query);
+    if (!q) return [];
+    const tokens = q.split(/\W+/).filter(Boolean).slice(0, 12);
+    const scored = [];
+    for (const doc of KB_DATA.documents) {
+      const text = buildDocText(doc);
+      let score = 0;
+      for (const t of tokens) {
+        if (t.length <= 1) continue;
+        if (text.includes(t)) score += 1;
+        // also check for partial bigrams
+        const bigrams = t.match(/.{1,3}/g) || [];
+        for (const bg of bigrams) {
+          if (bg.length > 1 && text.includes(bg)) score += 0.2;
+        }
+      }
+      if (score > 0) scored.push({ doc, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, maxResults).map(s => s.doc);
+  };
+
+  // Classify query intent to guide response-length ranges
+  const classifyQueryType = (query) => {
+    const q = (query || '').toLowerCase();
+    if (/\b(hi|hello|hey|who are you|tell me about yourself|introduce yourself)\b/.test(q)) return 'greeting';
+    if (/(skill|skills|technology|technologies|stack|tools|languages)\b/.test(q)) return 'skills';
+    if (/(contact|email|phone|reach|where to contact|contact details)\b/.test(q)) return 'contact';
+    if (/(education|degree|b\.e|b\.e\b|college|university|school|background)\b/.test(q)) return 'education';
+    if (/(company|works at|current company|employer|where.*work)\b/.test(q)) return 'company';
+    if (/(project|explain|describe|tell me about|what is|overview)\b/.test(q) && /(bbo\s*cw|tncsc|smart travellers|regression|project)/.test(q)) return 'project';
+    if (/(experience|career|professional summary|career overview|work history|role|responsibilities)\b/.test(q)) return 'experience';
+    return 'general';
+  };
+
+  const getLengthRangeForType = (type) => {
+    // returns {min, max} word counts
+    switch (type) {
+      case 'greeting': return { min: 20, max: 50 };
+      case 'skills':
+      case 'contact':
+      case 'education':
+      case 'company': return { min: 50, max: 150 };
+      case 'project':
+      case 'experience': return { min: 100, max: 250 };
+      default: return { min: 50, max: 150 };
+    }
+  };
+
+  const buildContextFromDocs = (docs, charLimit = 2000) => {
+    const pieces = [];
+    for (const d of docs) {
+      if (d.title) pieces.push(d.title);
+      if (d.paragraphs) pieces.push(d.paragraphs.join('\n'));
+      if (d.responsibilities) pieces.push(d.responsibilities.join('\n'));
+      if (d.projects) pieces.push(d.projects.map(p => p.title ? `${p.title}: ${p.brief || ''}` : p.brief || '').join('\n'));
+      if (d.contact) pieces.push(Object.entries(d.contact).map(([k,v]) => `${k}: ${v}`).join('\n'));
+    }
+    let ctx = pieces.join('\n\n');
+    if (ctx.length > charLimit) ctx = ctx.slice(0, charLimit) + '\n…';
+    return ctx;
+  };
+
   const getResponse = async (input) => {
     if (/\b(contact|email|phone|reach|contact details|location|located|where|based|office|city|current company|works at|working at)\b/i.test(input)) {
       return '__CONTACT_TRIGGER__';
@@ -1240,14 +1365,33 @@ Portfolio facts:
     if (/\b(visitor|visitor count|visitors|site visits|page views|visit count)\b/i.test(input)) {
       return '__VISITOR_REMOTE__';
     }
-    if (!isPortfolioQuery(input)) {
+
+    if (NON_PORTFOLIO_PATTERN.test(input)) {
       return BLOCKED_PORTFOLIO_REPLY;
     }
+
+    // Load KB and search before calling the worker. If no match, respond with missing-info.
+    await ensureKBLoaded();
+    let matched = searchKB(input, 6);
+    if (!matched || matched.length === 0) {
+      // try a looser search to infer intent from alternate wording
+      matched = searchKBLoose(input, 6);
+    }
+    if (!matched || matched.length === 0) {
+      return MISSING_INFO_REPLY;
+    }
+
+    const context = buildContextFromDocs(matched, 4000);
+    // determine desired length range based on query intent and include it in the context
+    const qType = classifyQueryType(input);
+    const range = getLengthRangeForType(qType);
+    const lengthInstruction = `DesiredResponseLength: ${range.min}-${range.max} words. QueryType: ${qType}.`;
+    const augmentedContext = `${lengthInstruction}\n\n${context}`;
     try {
       const res = await fetch(LEO_WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: input, context: augmentedContext, kb_matches: matched.map(m => m.id), query_type: qType }),
       });
       if (!res.ok) throw new Error('worker error');
       const data = await res.json();
@@ -1260,7 +1404,8 @@ Portfolio facts:
           `… [Reply limited to ${MAX_REPLY_CHARS} chars. Ask a follow-up for more!]`;
       }
       return reply;
-    } catch {
+    } catch (err) {
+      console.error('Worker call failed:', err);
       return localResponses(input);
     }
   };
@@ -1273,6 +1418,15 @@ Portfolio facts:
     if (emailFlow) {
       const handled = await handleEmailFlow(text);
       if (handled) return;
+    }
+
+    // Enforce user input length: max 100 words. If exceeded, do not call Gemini.
+    const wordCount = (text || '').trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount > 100) {
+      appendChatMessage(text, 'user');
+      appendChatMessage("Please keep your question within 100 words so I can provide a focused answer about S Dinesh Kumar's portfolio.", 'bot');
+      chatInput.value = '';
+      return;
     }
 
     if (isBotTyping) {
@@ -1364,7 +1518,7 @@ Portfolio facts:
           }
         })();
       } else {
-        appendChatMessage(response, 'bot');
+        appendChatMessage(trimReplyWords(response, 300), 'bot');
       }
     }, delay);
   };
