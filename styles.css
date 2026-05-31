@@ -1848,6 +1848,12 @@ figure {
     gap: 1rem;
 }
 
+.feedback-form-left,
+.feedback-form-right {
+    display: grid;
+    gap: 1rem;
+}
+
 .form-group {
     display: grid;
     gap: 0.35rem;
@@ -1929,8 +1935,14 @@ figure {
     font-size: 0.95rem;
     cursor: pointer;
     transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
-    width: 100%;
+    width: auto;
+    min-width: 170px;
     margin-top: 0.25rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .feedback-form button:hover:not(:disabled) {
@@ -1948,24 +1960,22 @@ figure {
     background: rgba(78, 212, 198, 0.72);
 }
 
-.spinner {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
+@media (min-width: 900px) {
+    .feedback-form {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+    .feedback-form-right {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
 
-.feedback-form button .spinner {
-    margin-right: 0.5rem;
+    .feedback-form-right .form-actions {
+        margin-top: auto;
+    }
 }
-
 .status-message {
     margin-top: 1rem;
     padding: 0.95rem 1rem;

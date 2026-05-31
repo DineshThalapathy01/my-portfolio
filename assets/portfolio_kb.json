@@ -102,6 +102,16 @@
       }
     },
     {
+      "id": "feedback",
+      "path": "templates/feedback.html",
+      "title": "Feedback — Share feedback",
+      "headings": ["Get in touch", "Share Your Feedback"],
+      "paragraphs": [
+        "I value your thoughts and suggestions. Please share your feedback about my portfolio, projects, or anything else you'd like to discuss.",
+        "Use the Feedback page form to submit your name, email, subject, and message."
+      ]
+    },
+    {
       "id": "eagle_software",
       "path": "templates/eagle_software.html",
       "title": "Eagle Software India Private Limited — Experience",

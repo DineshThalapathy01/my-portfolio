@@ -37,37 +37,41 @@
             <p>I value your thoughts and suggestions. Please share your feedback about my portfolio, projects, or anything else you'd like to discuss.</p>
 
             <form id="feedbackForm" class="feedback-form">
-                <div class="form-group">
-                    <label for="feedbackName">Name <span class="required">*</span></label>
-                    <input type="text" id="feedbackName" name="name" placeholder="Your name" required>
-                    <span class="error-message" id="nameError"></span>
+                <div class="feedback-form-left">
+                    <div class="form-group">
+                        <label for="feedbackName">Name <span class="required">*</span></label>
+                        <input type="text" id="feedbackName" name="name" placeholder="Your name" required>
+                        <span class="error-message" id="nameError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="feedbackEmail">Email <span class="required">*</span></label>
+                        <input type="email" id="feedbackEmail" name="email" placeholder="Your email" required>
+                        <span class="error-message" id="emailError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="feedbackSubject">Subject <span class="required">*</span></label>
+                        <input type="text" id="feedbackSubject" name="subject" placeholder="Feedback subject" required>
+                        <span class="error-message" id="subjectError"></span>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="feedbackEmail">Email <span class="required">*</span></label>
-                    <input type="email" id="feedbackEmail" name="email" placeholder="Your email" required>
-                    <span class="error-message" id="emailError"></span>
-                </div>
+                <div class="feedback-form-right">
+                    <div class="form-group">
+                        <label for="feedbackMessage">Message <span class="required">*</span></label>
+                        <textarea id="feedbackMessage" name="message" placeholder="Your message (min 10 chars)" rows="10" required></textarea>
+                        <span class="error-message" id="messageError"></span>
+                    </div>
 
-                <div class="form-group">
-                    <label for="feedbackSubject">Subject <span class="required">*</span></label>
-                    <input type="text" id="feedbackSubject" name="subject" placeholder="Feedback subject" required>
-                    <span class="error-message" id="subjectError"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="feedbackMessage">Message <span class="required">*</span></label>
-                    <textarea id="feedbackMessage" name="message" placeholder="Your message (min 10 chars)" rows="6" required></textarea>
-                    <span class="error-message" id="messageError"></span>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" id="submitFeedbackBtn" class="btn btn-primary" disabled>
-                        <span id="submitText">Submit Feedback</span>
-                        <span id="submitSpinner" class="spinner" style="display: none;">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </span>
-                    </button>
+                    <div class="form-actions">
+                        <button type="submit" id="submitFeedbackBtn" class="btn btn-primary" disabled>
+                            <span id="submitText">Submit Feedback</span>
+                            <span id="submitSpinner" class="spinner" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="feedbackStatus" class="feedback-status" style="display: none;"></div>

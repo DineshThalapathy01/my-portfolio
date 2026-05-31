@@ -1147,6 +1147,9 @@
       if (/(contact details|how can i contact|how to contact|contact email)/.test(q)) {
         return getContactDetailsText();
       }
+      if (/(feedback|feedback form|send feedback|leave feedback|submit feedback|suggestion|review|comment)/.test(q)) {
+        return 'You can use the Feedback page to send your thoughts directly through the site. It includes a form for name, email, subject, and message.';
+      }
       return '';
     };
 
@@ -1189,7 +1192,7 @@ Portfolio facts:
   - Contact: dineshkummarnavarasam@gmail.com
   - Portfolio URL: https://dineshthalapathy01.github.io/my-portfolio/`;
 
-  const PORTFOLIO_QUERY_PATTERN = /\b(?:s dinesh kumar|dinesh|portfolio|resume|experience|projects|career|contact|company|history|architecture|government|achievements|project|work|employment|background|job|bbo\s*cw|tncsc|smart travellers|regression|chatbot|visitor counter|ai chatbot|cloudflare)\b/i;
+  const PORTFOLIO_QUERY_PATTERN = /\b(?:s dinesh kumar|dinesh|portfolio|resume|experience|projects|career|contact|company|history|architecture|government|achievements|project|work|employment|background|job|feedback|suggestion|review|comment|bbo\s*cw|tncsc|smart travellers|regression|chatbot|visitor counter|ai chatbot|cloudflare)\b/i;
   const TECHNOLOGY_PATTERN = /\b(?:spring boot|angular|flutter|postgresql|oracle|mysql|jwt|spring security|rest api|microservices|gcp|github|java|git)\b/i;
   const TECHNOLOGY_CONTEXT_PATTERN = /\b(?:experience|skill|skills|use|using|used|build|built|develop|development|project|projects|application|stack|work|worked|expertise|technology|technologies)\b/i;
   const NON_PORTFOLIO_PATTERN = /\b(?:weather|movie|movies|politics|religion|cricket|news|sports|score|scores|math|mathematics|algebra|geometry|calculus|1\+1|solve|code|program|programming|algorithm|algorithms|data structure|ds a|dsa|interview|leetcode|hackerrank|general knowledge|gk|chatgpt|gemini|openai|gpt|jailbreak|developer mode|forget previous|ignore previous|ignore instructions|prompt injection|dan)\b/i;
