@@ -79,7 +79,7 @@
 
   // Call OpenAI Chat Completions to get an ATS-style structured response.
   function callOpenAIForATS(text, apiKey){
-    var system = "You are an ATS scoring assistant. Given a resume plaintext, return a JSON object with keys: score (0-100 integer), suggestions (array of short actionable strings), summaries (optional short summary). Respond with ONLY valid JSON.":
+    var system = "You are an ATS scoring assistant. Given a resume plaintext, return a JSON object with keys: score (0-100 integer), suggestions (array of short actionable strings), summaries (optional short summary). Respond with ONLY valid JSON.";
     var user = "ResumeText:\n" + text.slice(0, 24000); // limit size
     var payload = {
       model: 'gpt-4o-mini',
@@ -190,18 +190,30 @@
     }
 
     if(!run||!ta||!out) return;
-    run.addEventListener('click', function(){
-      var text = ta.value || '';
-      if(!text.trim()){ out.innerHTML = '<em>Upload a PDF or paste resume text first.</em>'; return; }
-      saveApiKeyIfNeeded();
-      runAllOnText(text);
-      // if API key provided, call external provider for a structured ATS check
+
+    // helper to fetch and parse the site's PDF file
+    function fetchSitePDFAndRun(){
+      var pdfPath = 'S Dinesh Kumar.pdf';
+      var encoded = encodeURI(pdfPath);
+      out.innerHTML = '<div style="color:#0e5f5a">Fetching site resume for ATS check…</div>';
+      return fetch(encoded).then(function(r){ if(!r.ok) throw new Error('Failed to fetch site PDF'); return r.arrayBuffer(); }).then(function(arr){
+        return extractTextFromPDFArrayBuffer(arr).then(function(text){
+          try{ iframe.src = encoded; }catch(e){}
+          runAllOnText(text);
+          return text;
+        });
+      }).catch(function(err){ out.innerHTML = '<div style="color:#7a1f1f">PDF parsing failed: '+(err.message||err)+'</div>'; throw err; });
+    }
+
+    // factor out external call so we can invoke after site-pdf run
+    function maybeCallExternal(text){
       var key = apiKeyInput && apiKeyInput.value && apiKeyInput.value.trim();
       var provider = providerSel && providerSel.value;
-      if(key && provider === 'openai'){
+      if(!provider || provider === 'local') return; // no external call for local
+      if(provider === 'openai'){
+        if(!key){ out.innerHTML += '<div style="color:#7a1f1f;margin-top:.5rem">OpenAI key required for external check.</div>'; return; }
         out.innerHTML = '<div style="color:#0e5f5a">Running external ATS check (OpenAI)...</div>';
         callOpenAIForATS(text, key).then(function(result){
-          // append result below local checks
           var box = document.createElement('div');
           box.style.marginTop = '.6rem';
           box.style.padding = '.6rem';
@@ -217,8 +229,24 @@
           }catch(e){ box.textContent = 'LLM response: '+String(result); }
           out.appendChild(box);
         }).catch(function(err){ out.innerHTML = '<div style="color:#7a1f1f">External ATS failed: '+(err.message||err)+'</div>'; });
+        return;
+      }
+      // other provider placeholders
+      out.innerHTML += '<div style="color:#7a1f1f;margin-top:.5rem">Selected provider ('+provider+') is not yet implemented. Use Local or OpenAI.</div>';
+    }
+
+    run.addEventListener('click', function(){
+      var text = ta.value || '';
+      saveApiKeyIfNeeded();
+      var finish = function(text){ runAllOnText(text); return text; };
+      if(!text.trim()){
+        fetchSitePDFAndRun().then(function(text){ maybeCallExternal(text); }).catch(function(){});
+      } else {
+        finish(text);
+        maybeCallExternal(text);
       }
     });
+
     clear.addEventListener('click', function(){ ta.value=''; out.innerHTML=''; scoreValue.textContent='—'; scoreBar.style.width='0%'; });
   });
 })();
