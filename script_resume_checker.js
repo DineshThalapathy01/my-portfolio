@@ -183,6 +183,25 @@
       if(saved) apiKeyInput.value = saved;
     }catch(e){}
 
+    // when provider changes, clear any existing API key and results
+    // and hide/show the API key form depending on provider
+    var apiKeyForm = document.getElementById('apiKeyForm');
+    function updateApiKeyFormVisibility(){
+      if(!apiKeyForm) return;
+      if(providerSel && providerSel.value === 'local') apiKeyForm.style.display = 'none';
+      else apiKeyForm.style.display = 'block';
+    }
+    // initial visibility
+    updateApiKeyFormVisibility();
+
+    providerSel.addEventListener('change', function(){
+      try{ apiKeyInput.value = ''; }catch(e){}
+      try{ if(saveKey) saveKey.checked = false; }catch(e){}
+      try{ out.innerHTML = ''; }catch(e){}
+      try{ scoreValue.textContent = '—'; scoreBar.style.width = '0%'; }catch(e){}
+      updateApiKeyFormVisibility();
+    });
+
     function saveApiKeyIfNeeded(){
       try{
         if(saveKey && saveKey.checked){ sessionStorage.setItem('resume_checker_api_key', apiKeyInput.value || ''); }
