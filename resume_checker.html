@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Resume Viewer & ATS Checker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body class="app-shell">
+    <header class="app-header">
+        <div class="brand">
+            <h1 class="brand-title">Resume — S Dinesh Kumar</h1>
+        </div>
+        <nav class="app-nav">
+            <a href="index.html">Home</a>
+            <a href="templates/about.html">About</a>
+            <a href="templates/projects.html">Projects</a>
+            <a href="templates/contact.html">Contact</a>
+            <a href="resume_checker.html" class="active">Resume</a>
+        </nav>
+    </header>
+
+    <main class="page-main">
+        <section class="section-card" style="display:flex;gap:1rem;align-items:flex-start;">
+            <div style="flex:1;min-width:320px;">
+                <span class="eyebrow">View Resume</span>
+                <div style="border:1px solid #ddd;padding:0.5rem;height:720px;overflow:hidden;">
+                    <iframe src="S%20Dinesh%20Kumar.pdf" title="Resume" style="width:100%;height:100%;border:0"></iframe>
+                </div>
+                <p style="margin-top:.5rem;font-size:.9rem;color:#666">Tip: use the View to inspect layout; use Download for a copy.</p>
+            </div>
+
+            <div style="width:420px;">
+                <span class="eyebrow">ATS Checker (paste resume text)</span>
+                <p style="margin:.25rem 0 .5rem 0;color:#666">Paste plain text from your resume below and click <strong>Run checks</strong>.</p>
+                <textarea id="resumeText" placeholder="Paste resume text here" style="width:100%;height:300px;padding:.5rem;resize:vertical;"></textarea>
+                <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+                    <button id="runChecks" class="btn btn-primary">Run checks</button>
+                    <button id="clearText" class="btn">Clear</button>
+                </div>
+
+                <div id="results" style="margin-top:1rem;padding:.75rem;border:1px solid #eee;background:#fafafa;min-height:160px;overflow:auto"></div>
+                <p style="margin-top:.5rem;font-size:.85rem;color:#666">Note: PDF/DOCX text extraction not included — paste extracted text for now.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">Designed & Maintained by S Dinesh Kumar.</footer>
+    <script src="script_resume_checker.js"></script>
+</body>
+</html>
