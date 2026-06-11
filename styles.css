@@ -2194,3 +2194,38 @@ figure {
 
 /* Small helpers for resume checker page */
 .resume-checker-fullwidth { max-width: none !important; padding-left: 0.5rem; padding-right: 0.5rem; }
+
+/* Resume checker specific layout */
+.resume-grid {
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 1.25rem;
+        align-items: start;
+}
+.resume-view { display:flex; flex-direction:column; gap:0.6rem; }
+.resume-view-head { display:flex; justify-content:space-between; align-items:center; }
+.resume-actions .btn { margin-left:0.5rem; }
+.resume-frame { border:1px solid rgba(15,79,84,0.06); height:720px; border-radius:10px; overflow:hidden; }
+.resume-frame iframe { width:100%; height:100%; border:0; }
+
+.ats-panel { display:flex; flex-direction:column; gap:0.8rem; }
+.ats-header { display:flex; justify-content:space-between; align-items:center; gap:0.6rem; }
+.ats-score { text-align:right; min-width:120px; }
+.score-value { font-size:1.25rem; font-weight:800; color:var(--accent-deep); }
+.score-bar { height:10px; background:#eee; border-radius:8px; overflow:hidden; margin-top:6px; }
+.score-bar > div { height:100%; width:0%; background:linear-gradient(90deg,#1f9d94,#0f4f54); }
+
+.form-block { display:flex; flex-direction:column; gap:0.45rem; }
+.form-control { padding:.5rem; border-radius:8px; border:1px solid rgba(15,79,84,0.08); }
+.form-inline { display:flex; gap:.5rem; align-items:center; }
+.form-inline input[type=password]{ flex:1; padding:.45rem; border-radius:8px; border:1px solid rgba(15,79,84,0.08); }
+.small-muted { font-size:.82rem; color:var(--muted); }
+.small-textarea { width:100%; height:180px; padding:.5rem; resize:vertical; border-radius:8px; border:1px solid rgba(15,79,84,0.06); }
+
+.ats-controls { display:flex; gap:.5rem; }
+.results-box { margin-top:.6rem; padding:.6rem; border:1px solid rgba(15,79,84,0.06); background:var(--surface-soft); min-height:140px; overflow:auto; }
+
+@media (max-width: 920px){
+    .resume-grid{ grid-template-columns: 1fr; }
+    .resume-frame{ height:480px; }
+}
