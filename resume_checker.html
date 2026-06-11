@@ -21,27 +21,45 @@
         </nav>
     </header>
 
-    <main class="page-main">
-        <section class="section-card" style="display:flex;gap:1rem;align-items:flex-start;">
-            <div style="flex:1;min-width:320px;">
+    <main class="page-main" style="max-width:none;padding:1rem 1rem 3rem;">
+        <section class="section-card" style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+            <div style="flex:1 1 60%;min-width:320px;">
                 <span class="eyebrow">View Resume</span>
-                <div style="border:1px solid #ddd;padding:0.5rem;height:720px;overflow:hidden;">
-                    <iframe src="S%20Dinesh%20Kumar.pdf" title="Resume" style="width:100%;height:100%;border:0"></iframe>
+                <div style="border:1px solid #ddd;padding:0.5rem;height:900px;overflow:hidden;">
+                    <iframe id="resumeIframe" src="S%20Dinesh%20Kumar.pdf" title="Resume" style="width:100%;height:100%;border:0"></iframe>
                 </div>
-                <p style="margin-top:.5rem;font-size:.9rem;color:#666">Tip: use the View to inspect layout; use Download for a copy.</p>
+                <p style="margin-top:.5rem;font-size:.9rem;color:#666">Tip: use View to inspect layout; use Download for a copy — or upload a PDF to run the ATS check automatically.</p>
             </div>
 
-            <div style="width:420px;">
-                <span class="eyebrow">ATS Checker (paste resume text)</span>
-                <p style="margin:.25rem 0 .5rem 0;color:#666">Paste plain text from your resume below and click <strong>Run checks</strong>.</p>
-                <textarea id="resumeText" placeholder="Paste resume text here" style="width:100%;height:300px;padding:.5rem;resize:vertical;"></textarea>
-                <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+            <div style="flex:1 1 36%;min-width:340px;">
+                <span class="eyebrow">ATS Checker</span>
+                <p style="margin:.25rem 0 .5rem 0;color:#666">Upload a PDF or paste text. The checker will extract text from PDF and score your resume out of 100.</p>
+                <input id="pdfInput" type="file" accept="application/pdf" style="width:100%;padding:.4rem;margin-bottom:.5rem" />
+                <div style="display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center;">
                     <button id="runChecks" class="btn btn-primary">Run checks</button>
                     <button id="clearText" class="btn">Clear</button>
                 </div>
 
+                <div style="margin-top:.55rem;padding:.6rem;border-radius:10px;background:rgba(0,0,0,0.02);">
+                    <label style="display:block;font-weight:700;margin-bottom:.25rem">External ATS (optional)</label>
+                    <select id="providerSelect" style="width:100%;padding:.4rem;margin-bottom:.45rem">
+                        <option value="openai">OpenAI (Chat)</option>
+                    </select>
+                    <input id="apiKeyInput" type="password" placeholder="Paste provider API key (keeps in session only)" style="width:100%;padding:.45rem;margin-bottom:.35rem" />
+                    <label style="font-size:.85rem;color:#666"><input id="saveKey" type="checkbox" /> Remember in this browser session</label>
+                </div>
+
+                <div style="margin-top:.5rem;">
+                    <div id="scoreWrap" style="margin-bottom:.5rem">
+                        <strong>ATS Score:</strong> <span id="scoreValue">—</span>
+                        <div style="height:10px;background:#eee;border-radius:8px;overflow:hidden;margin-top:.35rem">
+                            <div id="scoreBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1f9d94,#0f4f54);"></div>
+                        </div>
+                    </div>
+                    <textarea id="resumeText" placeholder="(extracted text will appear here)" style="width:100%;height:420px;padding:.5rem;resize:vertical;"></textarea>
+                </div>
+
                 <div id="results" style="margin-top:1rem;padding:.75rem;border:1px solid #eee;background:#fafafa;min-height:160px;overflow:auto"></div>
-                <p style="margin-top:.5rem;font-size:.85rem;color:#666">Note: PDF/DOCX text extraction not included — paste extracted text for now.</p>
             </div>
         </section>
     </main>

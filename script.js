@@ -12,6 +12,19 @@
         document.body.classList.remove("menu-open");
       });
     });
+      // Mobile: toggle resume dropdown menu when tapped
+      appNav.querySelectorAll('.nav-resume').forEach((wrapper) => {
+        const trigger = wrapper.querySelector('.nav-resume-link');
+        if (!trigger) return;
+        trigger.addEventListener('click', (e) => {
+          if (window.innerWidth <= 760) {
+            e.preventDefault();
+            wrapper.classList.toggle('open');
+            const expanded = wrapper.classList.contains('open');
+            trigger.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+          }
+        });
+      });
   }
 
   document.querySelectorAll(".dropdown-btn").forEach((btn) => {

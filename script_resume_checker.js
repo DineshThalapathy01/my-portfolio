@@ -1,5 +1,8 @@
 // Simple client-side ATS checks. Operates on pasted plain text.
 (function(){
+  // If pdf.js is available, it will be used for PDF text extraction.
+  const pdfjs = window['pdfjsLib'];
+
   function findEmail(text){
     var m = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig);
     return m ? m[0] : null;
@@ -48,6 +51,62 @@
     return res;
   }
 
+  function computeScore(text){
+    // weights (total 100): email 10, phone 10, wordcount 20, headings 20, keywords 25, bullets 15
+    var score = 0;
+    var email = findEmail(text) ? 10 : 0;
+    var phone = findPhone(text) ? 10 : 0;
+    var wc = countWords(text);
+    var wcScore = 0;
+    if(wc >= 400 && wc <= 1500) wcScore = 20; else if (wc >= 250) wcScore = 12; else if (wc >= 150) wcScore = 6; else wcScore = 0;
+    var headingsFound = hasHeadings(text).length;
+    var headingsScore = Math.min(20, Math.round((headingsFound/5)*20));
+    var keywords = ['java','spring','angular','sql','postgres','microservice','rest','api','aws','docker','kubernetes','git'];
+    var lower = text.toLowerCase();
+    var foundK = keywords.filter(function(k){ return lower.indexOf(k) !== -1; });
+    var keywordsScore = Math.min(25, Math.round((foundK.length/keywords.length)*25));
+    var bullets = (text.match(/[\u2022\-\*]\s+/g) || []).length;
+    var bulletsScore = Math.min(15, Math.round(Math.min(bullets,6)/6*15));
+
+    score = email + phone + wcScore + headingsScore + keywordsScore + bulletsScore;
+    return {score: score, breakdown:{email,phone,wcScore,headingsScore,keywordsScore,bulletsScore,foundK}};
+  }
+
+  function renderScore(scoreObj, scoreEl, barEl){
+    scoreEl.textContent = scoreObj.score + ' / 100';
+    barEl.style.width = Math.max(0, Math.min(100, scoreObj.score)) + '%';
+  }
+
+  // Call OpenAI Chat Completions to get an ATS-style structured response.
+  function callOpenAIForATS(text, apiKey){
+    var system = "You are an ATS scoring assistant. Given a resume plaintext, return a JSON object with keys: score (0-100 integer), suggestions (array of short actionable strings), summaries (optional short summary). Respond with ONLY valid JSON.":
+    var user = "ResumeText:\n" + text.slice(0, 24000); // limit size
+    var payload = {
+      model: 'gpt-4o-mini',
+      messages: [
+        {role:'system', content: system},
+        {role:'user', content: user}
+      ],
+      temperature: 0.2,
+      max_tokens: 600
+    };
+
+    return fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      if(!r.ok) return r.text().then(function(t){ throw new Error('OpenAI error: '+t); });
+      return r.json();
+    }).then(function(j){
+      var content = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      return content;
+    });
+  }
+
   function renderResults(results, container){
     container.innerHTML = '';
     results.forEach(function(r){
@@ -60,18 +119,106 @@
     });
   }
 
+  // PDF extraction utility
+  function extractTextFromPDFArrayBuffer(arrBuf){
+    if(!pdfjs) return Promise.reject(new Error('pdf.js not available'));
+    return pdfjs.getDocument({data:arrBuf}).promise.then(function(pdf){
+      var max = pdf.numPages;
+      var seq = [];
+      for(var i=1;i<=max;i++){
+        seq.push(pdf.getPage(i).then(function(page){
+            return page.getTextContent().then(function(tc){
+              return tc.items.map(function(it){ return it.str; }).join(' ');
+            });
+        }));
+      }
+      return Promise.all(seq).then(function(pages){ return pages.join('\n'); });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function(){
     var run = document.getElementById('runChecks');
     var clear = document.getElementById('clearText');
     var ta = document.getElementById('resumeText');
     var out = document.getElementById('results');
+    var pdfInput = document.getElementById('pdfInput');
+    var scoreValue = document.getElementById('scoreValue');
+    var scoreBar = document.getElementById('scoreBar');
+    var iframe = document.getElementById('resumeIframe');
+
+    function runAllOnText(text){
+      ta.value = text;
+      var r = runChecks(text);
+      renderResults(r, out);
+      var s = computeScore(text);
+      renderScore(s, scoreValue, scoreBar);
+    }
+
+    if(pdfInput){
+      pdfInput.addEventListener('change', function(e){
+        var f = e.target.files && e.target.files[0];
+        if(!f) return;
+        var reader = new FileReader();
+        reader.onload = function(ev){
+          var arr = ev.target.result;
+          extractTextFromPDFArrayBuffer(arr).then(function(text){
+            runAllOnText(text);
+            // update iframe to show uploaded PDF using object URL
+            try{ var url = URL.createObjectURL(f); iframe.src = url; }catch(e){}
+          }).catch(function(err){
+            out.innerHTML = '<div style="color:#7a1f1f">PDF parsing failed: '+(err.message||err)+'</div>';
+          });
+        };
+        reader.readAsArrayBuffer(f);
+      });
+    }
+
+    // provider / API key UI
+    var providerSel = document.getElementById('providerSelect');
+    var apiKeyInput = document.getElementById('apiKeyInput');
+    var saveKey = document.getElementById('saveKey');
+    // restore session key if saved
+    try{
+      var saved = sessionStorage.getItem('resume_checker_api_key');
+      if(saved) apiKeyInput.value = saved;
+    }catch(e){}
+
+    function saveApiKeyIfNeeded(){
+      try{
+        if(saveKey && saveKey.checked){ sessionStorage.setItem('resume_checker_api_key', apiKeyInput.value || ''); }
+      }catch(e){}
+    }
+
     if(!run||!ta||!out) return;
     run.addEventListener('click', function(){
       var text = ta.value || '';
-      if(!text.trim()){ out.innerHTML = '<em>Paste resume text first.</em>'; return; }
-      var r = runChecks(text);
-      renderResults(r, out);
+      if(!text.trim()){ out.innerHTML = '<em>Upload a PDF or paste resume text first.</em>'; return; }
+      saveApiKeyIfNeeded();
+      runAllOnText(text);
+      // if API key provided, call external provider for a structured ATS check
+      var key = apiKeyInput && apiKeyInput.value && apiKeyInput.value.trim();
+      var provider = providerSel && providerSel.value;
+      if(key && provider === 'openai'){
+        out.innerHTML = '<div style="color:#0e5f5a">Running external ATS check (OpenAI)...</div>';
+        callOpenAIForATS(text, key).then(function(result){
+          // append result below local checks
+          var box = document.createElement('div');
+          box.style.marginTop = '.6rem';
+          box.style.padding = '.6rem';
+          box.style.borderTop = '1px dashed #ddd';
+          try{
+            var parsed = typeof result === 'string' ? JSON.parse(result) : result;
+            box.innerHTML = '<strong>LLM ATS Score:</strong> '+(parsed.score||'—')+' / 100';
+            if(parsed.suggestions && parsed.suggestions.length){
+              box.innerHTML += '<ul style="margin-top:.4rem">'+parsed.suggestions.map(function(s){return '<li>'+s+'</li>';}).join('')+'</ul>';
+            } else if(parsed.summaries){
+              box.innerHTML += '<pre style="white-space:pre-wrap">'+(parsed.summaries||'')+'</pre>';
+            }
+          }catch(e){ box.textContent = 'LLM response: '+String(result); }
+          out.appendChild(box);
+        }).catch(function(err){ out.innerHTML = '<div style="color:#7a1f1f">External ATS failed: '+(err.message||err)+'</div>'; });
+      }
     });
-    clear.addEventListener('click', function(){ ta.value=''; out.innerHTML=''; });
+    clear.addEventListener('click', function(){ ta.value=''; out.innerHTML=''; scoreValue.textContent='—'; scoreBar.style.width='0%'; });
   });
 })();

@@ -2059,6 +2059,46 @@ figure {
     font-size: 0.95rem;
 }
 
+/* Resume dropdown menu */
+.nav-resume {
+    position: relative;
+}
+.nav-resume-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    display: none;
+    flex-direction: column;
+    min-width: 160px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 30px rgba(12,42,52,0.08);
+    overflow: hidden;
+    z-index: 1200;
+}
+.nav-resume-menu a {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    padding: .6rem .9rem;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 700;
+    background: transparent;
+    border-bottom: 1px solid rgba(15,79,84,0.04);
+}
+.nav-resume-menu a:last-child { border-bottom: none; }
+.nav-resume-menu a:hover { background: rgba(31,157,148,0.06); transform: none; }
+.nav-resume:hover .nav-resume-menu,
+.nav-resume:focus-within .nav-resume-menu { display: flex; }
+
+/* Mobile: show inline block instead of hover menu */
+@media (max-width: 760px) {
+    .nav-resume-menu { position: static; display: none; box-shadow: none; border: none; }
+    .nav-resume.open .nav-resume-menu { display: flex; }
+}
+
 /* Mobile adjustments for nav and resume button */
 @media (max-width: 760px) {
     .nav-resume-link {
@@ -2151,3 +2191,6 @@ figure {
         font-size: 0.88rem;
     }
 }
+
+/* Small helpers for resume checker page */
+.resume-checker-fullwidth { max-width: none !important; padding-left: 0.5rem; padding-right: 0.5rem; }
