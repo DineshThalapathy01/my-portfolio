@@ -251,7 +251,7 @@
     }
 
     footer.innerHTML =
-      `Designed & Maintained by S Dinesh Kumar. Last updated: May 31, 2026.` +
+      `Designed & Maintained by S Dinesh Kumar. Last updated: June 11, 2026.` +
       `<div class="footer-visitor-summary">` +
       `<span class="footer-badge footer-badge-today">Visitors Today: ${counts.today}</span>` +
       `<span class="footer-badge footer-badge-total">` +
@@ -304,7 +304,7 @@
   };
 
   const calculateExperience = () => {
-    const startDate = new Date("2023-04-12");
+    const startDate = new Date("2023-04-01");
     const currentDate = new Date();
 
     let years = currentDate.getFullYear() - startDate.getFullYear();
@@ -388,7 +388,7 @@
       <div class="chat-widget-header" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <span class="chat-welcome">LEO</span>
-          <p class="chat-subtitle">Portfolio Real Time AI assistant</p>
+          <p class="chat-subtitle">Portfolio(LEO) X GEMINI 2.5 Real Time AI Assistant </p>
         </div>
         <button id="chatCloseBtn" type="button" aria-label="Close chat" title="Close chat" style="background: none; border: none; cursor: pointer; font-size: 24px; padding: 0;">×</button>
       </div>
