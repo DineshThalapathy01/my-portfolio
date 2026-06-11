@@ -211,8 +211,14 @@
       var provider = providerSel && providerSel.value;
       if(!provider || provider === 'local') return; // no external call for local
       if(provider === 'openai'){
-        if(!key){ out.innerHTML += '<div style="color:#7a1f1f;margin-top:.5rem">OpenAI key required for external check.</div>'; return; }
-        out.innerHTML = '<div style="color:#0e5f5a">Running external ATS check (OpenAI)...</div>';
+        if(!key){ var msg = document.createElement('div'); msg.style.color='#7a1f1f'; msg.style.marginTop='.5rem'; msg.textContent = 'OpenAI key required for external check.'; out.appendChild(msg); return; }
+        var statusBox = document.createElement('div');
+        statusBox.style.marginTop = '.5rem';
+        statusBox.style.padding = '.5rem';
+        statusBox.style.borderTop = '1px dashed rgba(15,79,84,0.06)';
+        statusBox.style.background = 'rgba(31,157,148,0.02)';
+        statusBox.textContent = 'Running external ATS check (OpenAI)...';
+        out.appendChild(statusBox);
         callOpenAIForATS(text, key).then(function(result){
           var box = document.createElement('div');
           box.style.marginTop = '.6rem';
@@ -226,9 +232,14 @@
             } else if(parsed.summaries){
               box.innerHTML += '<pre style="white-space:pre-wrap">'+(parsed.summaries||'')+'</pre>';
             }
-          }catch(e){ box.textContent = 'LLM response: '+String(result); }
-          out.appendChild(box);
-        }).catch(function(err){ out.innerHTML = '<div style="color:#7a1f1f">External ATS failed: '+(err.message||err)+'</div>'; });
+          }catch(e){
+            box.innerHTML = '<strong>LLM response (raw):</strong><pre style="white-space:pre-wrap">'+String(result)+'</pre>';
+          }
+          try{ out.replaceChild(box, statusBox); }catch(e){ out.appendChild(box); }
+        }).catch(function(err){
+          try{ statusBox.textContent = 'External ATS failed: ' + (err && err.message ? err.message : String(err)); statusBox.style.color = '#7a1f1f'; }
+          catch(e){ out.appendChild(document.createTextNode('External ATS failed')); }
+        });
         return;
       }
       // other provider placeholders

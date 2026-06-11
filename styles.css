@@ -2196,11 +2196,18 @@ figure {
 .resume-checker-fullwidth { max-width: none !important; padding-left: 0.5rem; padding-right: 0.5rem; }
 
 /* Resume checker specific layout */
+.resume-checker {
+    max-width: none;
+    width: 100%;
+    padding: 1.5rem 2rem 3rem;
+    box-sizing: border-box;
+}
+
 .resume-grid {
-        display: grid;
-        grid-template-columns: 1fr 420px;
-        gap: 1.25rem;
-        align-items: start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 1.25rem;
+    align-items: start;
 }
 .resume-view { display:flex; flex-direction:column; gap:0.6rem; }
 .resume-view-head { display:flex; justify-content:space-between; align-items:center; }
