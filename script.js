@@ -264,7 +264,7 @@
     }
 
     footer.innerHTML =
-      `Designed & Maintained by S Dinesh Kumar. Last updated: June 11, 2026.` +
+      `Designed & Maintained by S Dinesh Kumar. Last updated: August 17, 2026.` +
       `<div class="footer-visitor-summary">` +
       `<span class="footer-badge footer-badge-today">Visitors Today: ${counts.today}</span>` +
       `<span class="footer-badge footer-badge-total">` +
